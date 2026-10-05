@@ -1,3 +1,4 @@
+import { CountUpNumber } from './CountUpNumber'
 import type { DataPoint } from '../data/dataPoints'
 import { DATA_CATEGORY_LABEL } from '../data/dataPoints'
 
@@ -6,7 +7,7 @@ export function DataBlock({ point }: { point: DataPoint }) {
     <article className="data-block reveal">
       <span className="data-block__cat">{DATA_CATEGORY_LABEL[point.category]}</span>
       <div>
-        <div className="data-block__headline">{point.headline}</div>
+        <CountUpNumber className="data-block__headline" value={point.headline} />
         {point.unit ? <div className="data-block__unit">{point.unit}</div> : null}
       </div>
       <h3>{point.title}</h3>

@@ -8,6 +8,7 @@ import { LOCATIONS, LOCATION_BY_SLUG } from '../data/locations'
 import { TYPE_LABEL } from '../data/types'
 import { IMAGES, commons } from '../utils/images'
 import { useReveal } from '../hooks/useReveal'
+import { useParallax } from '../hooks/useParallax'
 import { useSeo } from '../hooks/useSeo'
 
 const CATEGORIES = [
@@ -30,6 +31,7 @@ const HUMAN_ROWS = [
 
 export function Home() {
   useReveal()
+  useParallax()
   useSeo({
     title: '۴۰۴ — طبیعت پیدا نشد | آرشیو محیط زیست ایران',
     description:
@@ -43,7 +45,7 @@ export function Home() {
     <>
       {/* ---------------- HERO ---------------- */}
       <section className="hero" aria-labelledby="hero-title">
-        <div className="hero__media">
+        <div className="hero__media" data-parallax="26">
           <GlitchImage
             file={IMAGES.urmiaGround}
             shiftFile={IMAGES.urmiaIss}
@@ -55,25 +57,40 @@ export function Home() {
 
         <div className="shell hero__inner">
           <div>
-            <p className="eyebrow">آرشیو محیط زیست ایران</p>
+            {/* Staggered entrance: background, 404, title, claim, CTA. */}
+            <p className="eyebrow hero-item" style={{ ['--d' as string]: '160ms' }}>
+              آرشیو محیط زیست ایران
+            </p>
             <h1 id="hero-title" style={{ marginTop: '1.2rem' }}>
-              <GlitchText as="span" text="۴۰۴" className="hero__404" autoOnMount interval={9000} />
-              <span className="hero__title">طبیعت پیدا نشد</span>
+              <GlitchText
+                as="span"
+                text="۴۰۴"
+                className="hero__404 hero-item"
+                autoOnMount
+                interval={14000}
+              />
+              <span className="hero__title hero-item" style={{ ['--d' as string]: '520ms' }}>
+                طبیعت پیدا نشد
+              </span>
             </h1>
-            <p className="hero__claim">
+            <p className="hero__claim hero-item" style={{ ['--d' as string]: '720ms' }}>
               چیزی که دنبالش هستید،
               <br />
               ممکن است دیگر وجود نداشته باشد.
             </p>
-            <div className="hero__cta">
-              <Link className="btn btn--accent" to="/lost-places">
+            <div className="hero__cta hero-item" style={{ ['--d' as string]: '900ms' }}>
+              <Link className="btn btn--accent" to="/lost-places" data-cursor="cta">
                 کاوش در طبیعت گمشده
                 <ArrowIcon className="btn__arrow" />
               </Link>
             </div>
           </div>
 
-          <aside className="hero__card" aria-label="نمونه‌ای از آرشیو">
+          <aside
+            className="hero__card hero-item hero-item--aside"
+            style={{ ['--d' as string]: '700ms' }}
+            aria-label="نمونه‌ای از آرشیو"
+          >
             <Frame file={IMAGES.anzaliB} alt="تالاب انزلی از روی قایق محلی" ratio="43" width={720} sizes="340px" />
             <h3>{anzali.name}</h3>
             <dl>
@@ -133,8 +150,14 @@ export function Home() {
             {LOCATIONS.map((l, i) => (
               <article className="loss reveal" key={l.slug} id={i === 0 ? 'losses-title' : undefined}>
                 <div className="loss__media">
-                  <Link to={`/lost-places/${l.slug}`} aria-label={l.name}>
-                    <Frame file={l.cover.file} alt={l.cover.alt} credit={l.cover.credit} ratio="43" />
+                  <Link to={`/lost-places/${l.slug}`} aria-label={l.name} data-cursor="image">
+                    <Frame
+                      file={l.cover.file}
+                      alt={l.cover.alt}
+                      credit={l.cover.credit}
+                      ratio="43"
+                      parallax={16}
+                    />
                   </Link>
                 </div>
                 <div>

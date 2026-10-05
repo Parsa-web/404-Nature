@@ -6,6 +6,7 @@ import { Breadcrumbs } from '../components/Breadcrumbs'
 import { LOCATIONS } from '../data/locations'
 import { TYPE_LABEL, type EcosystemType } from '../data/types'
 import { useReveal } from '../hooks/useReveal'
+import { useParallax } from '../hooks/useParallax'
 import { useSeo } from '../hooks/useSeo'
 import { faNum } from '../utils/text'
 
@@ -28,6 +29,7 @@ export function LostPlaces() {
   )
 
   useReveal([active])
+  useParallax([active])
   useSeo({
     title: 'مکان‌های از دست‌رفته | ۴۰۴ — طبیعت پیدا نشد',
     description:
@@ -75,8 +77,14 @@ export function LostPlaces() {
           <div className="archive-list">
             {list.map((l, i) => (
               <article className="archive-row reveal" key={l.slug} data-reveal-delay={i * 60}>
-                <Link to={`/lost-places/${l.slug}`} aria-label={l.name}>
-                  <Frame file={l.cover.file} alt={l.cover.alt} credit={l.cover.credit} ratio="43" />
+                <Link to={`/lost-places/${l.slug}`} aria-label={l.name} data-cursor="image">
+                  <Frame
+                    file={l.cover.file}
+                    alt={l.cover.alt}
+                    credit={l.cover.credit}
+                    ratio="43"
+                    parallax={14}
+                  />
                 </Link>
                 <div>
                   <div className="archive-row__head">

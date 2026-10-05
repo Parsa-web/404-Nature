@@ -75,9 +75,9 @@ export function SearchPage() {
               <p style={{ color: 'var(--ink-faint)', fontSize: 'var(--step--1)', marginBottom: '1rem' }}>
                 {faNum(results.length)} نتیجه
               </p>
-              <ul>
+              <ul className="search-page__results">
                 {results.map((r, i) => (
-                  <li key={r.kind + r.id} className="reveal" data-reveal-delay={i * 40}>
+                  <li key={r.kind + r.id} style={{ animationDelay: `${Math.min(i, 8) * 55}ms` }}>
                     <ResultRow result={r} />
                   </li>
                 ))}

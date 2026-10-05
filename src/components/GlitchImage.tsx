@@ -8,7 +8,7 @@ interface Props {
   shiftFile?: string
   credit?: string
   eager?: boolean
-  /** Distortion burst interval in ms. */
+  /** Average gap between distortion bursts, in ms. */
   interval?: number
   className?: string
 }
@@ -17,19 +17,29 @@ interface Props {
  * Cinematic hero image that briefly tears into a second frame.
  * Used to carry the "healthy -> damaged" transition without a video file.
  */
-export function GlitchImage({ file, alt, shiftFile, credit, eager, interval = 7200, className = '' }: Props) {
+export function GlitchImage({ file, alt, shiftFile, credit, eager, interval = 11000, className = '' }: Props) {
   const [active, setActive] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const t = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const id = window.setInterval(() => {
-      setActive(true)
-      t.current = window.setTimeout(() => setActive(false), 950)
-    }, interval)
+
+    let next: number | undefined
+    const schedule = () => {
+      // Irregular, infrequent bursts: the image is a damaged record, not a loop.
+      next = window.setTimeout(() => {
+        if (!document.hidden) {
+          setActive(true)
+          t.current = window.setTimeout(() => setActive(false), 620)
+        }
+        schedule()
+      }, interval * (0.75 + Math.random() * 0.7))
+    }
+    schedule()
+
     return () => {
-      window.clearInterval(id)
+      window.clearTimeout(next)
       window.clearTimeout(t.current)
     }
   }, [interval])
@@ -47,7 +57,7 @@ export function GlitchImage({ file, alt, shiftFile, credit, eager, interval = 72
         fetchPriority={eager ? 'high' : 'auto'}
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}
-        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 1.2s var(--ease)' }}
+        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 1.4s var(--ease-cine)' }}
       />
       <span
         className="glitch-img__slice glitch-img__slice--a"

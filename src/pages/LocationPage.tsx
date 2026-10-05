@@ -9,6 +9,7 @@ import { LOCATION_BY_SLUG } from '../data/locations'
 import { TYPE_LABEL } from '../data/types'
 import { commons } from '../utils/images'
 import { useReveal } from '../hooks/useReveal'
+import { useParallax } from '../hooks/useParallax'
 import { useSeo } from '../hooks/useSeo'
 import { NotFound } from './NotFound'
 
@@ -25,6 +26,7 @@ export function LocationPage() {
   const loc = LOCATION_BY_SLUG[slug]
 
   useReveal([slug])
+  useParallax([slug])
   useSeo({
     title: loc ? `${loc.name} | ۴۰۴ — طبیعت پیدا نشد` : 'پیدا نشد | ۴۰۴',
     description: loc ? loc.summary : 'این صفحه پیدا نشد.',
@@ -45,6 +47,7 @@ export function LocationPage() {
             alt={loc.cover.alt}
             fetchPriority="high"
             decoding="async"
+            data-parallax="34"
           />
         </div>
         <div className="shell loc-hero__inner">
@@ -122,7 +125,15 @@ export function LocationPage() {
       <section aria-label={`تصاویر ${loc.name}`} className="reveal">
         <div className="loc-gallery">
           {loc.gallery.map((g) => (
-            <Frame key={g.file} file={g.file} alt={g.alt} credit={g.credit} ratio="43" sizes="(max-width:760px) 100vw, 33vw" />
+            <Frame
+              key={g.file}
+              file={g.file}
+              alt={g.alt}
+              credit={g.credit}
+              ratio="43"
+              sizes="(max-width:760px) 100vw, 33vw"
+              parallax={12}
+            />
           ))}
         </div>
       </section>
@@ -181,7 +192,7 @@ export function LocationPage() {
               const r = LOCATION_BY_SLUG[slugRef]
               if (!r) return null
               return (
-                <Link key={r.slug} to={`/lost-places/${r.slug}`}>
+                <Link key={r.slug} to={`/lost-places/${r.slug}`} data-cursor="image">
                   <Frame file={r.cover.file} alt={r.cover.alt} ratio="16" sizes="(max-width:760px) 100vw, 33vw" />
                   <div className="related__body">
                     <b>{r.name}</b>

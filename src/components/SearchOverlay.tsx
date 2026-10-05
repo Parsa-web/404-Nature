@@ -80,8 +80,8 @@ export function SearchOverlay({ open, onClose }: Props) {
               {results.length ? `${results.length} نتیجه` : 'نتیجه‌ای پیدا نشد.'}
             </div>
             <ul>
-              {results.map((r) => (
-                <li key={r.kind + r.id}>
+              {results.map((r, i) => (
+                <li key={r.kind + r.id} style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}>
                   <ResultRow result={r} onNavigate={onClose} />
                 </li>
               ))}

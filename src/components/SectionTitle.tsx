@@ -12,7 +12,11 @@ export function SectionTitle({ eyebrow, title, text, children }: Props) {
         {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
         <h2 style={{ marginTop: eyebrow ? '0.9rem' : 0 }}>{title}</h2>
       </div>
-      {text ? <p>{text}</p> : null}
+      {text ? (
+        <p className="reveal" data-reveal-delay={140}>
+          {text}
+        </p>
+      ) : null}
       {children}
     </header>
   )

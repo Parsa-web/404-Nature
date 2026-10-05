@@ -1,53 +1,68 @@
-import { useEffect, useRef, useState, type ElementType } from 'react'
+import { useCallback, useEffect, useRef, useState, type ElementType } from 'react'
 
 interface Props {
   text: string
   as?: ElementType
   className?: string
-  /** Fires once shortly after mount — used for entrances. */
+  /** Fires once shortly after mount — used for entrances and route changes. */
   autoOnMount?: boolean
   /** Fires on pointer enter. */
   onHover?: boolean
-  /** Repeats on an interval, in ms. Omit for no loop. */
+  /** Average gap between idle bursts, in ms. Omit for no idle loop. */
   interval?: number
 }
 
+const BURST_MS = 620
+
 /**
- * Storytelling device, not decoration: a short RGB-split burst.
+ * Storytelling device, not decoration: one short tear-and-scanline burst, then
+ * back to a clean state. Idle bursts are irregular on purpose — a steady pulse
+ * reads as a loading spinner, an irregular one reads as a damaged record.
  * Disabled entirely when the user prefers reduced motion.
  */
 export function GlitchText({ text, as: Tag = 'span', className = '', autoOnMount, onHover, interval }: Props) {
   const [active, setActive] = useState(false)
-  const timer = useRef<number | undefined>(undefined)
+  const burst = useRef<number | undefined>(undefined)
+  const idle = useRef<number | undefined>(undefined)
   const reduced = useRef(false)
+
+  const fire = useCallback(() => {
+    if (reduced.current) return
+    setActive(true)
+    window.clearTimeout(burst.current)
+    burst.current = window.setTimeout(() => setActive(false), BURST_MS)
+  }, [])
 
   useEffect(() => {
     reduced.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduced.current) return
-    const fire = () => {
-      setActive(true)
-      timer.current = window.setTimeout(() => setActive(false), 1000)
-    }
+
     let mountId: number | undefined
-    let loopId: number | undefined
-    if (autoOnMount) mountId = window.setTimeout(fire, 450)
-    if (interval) loopId = window.setInterval(fire, interval)
+    if (autoOnMount) mountId = window.setTimeout(fire, 520)
+
+    const scheduleIdle = () => {
+      if (!interval) return
+      // +/- 40% jitter so bursts never feel metronomic.
+      const next = interval * (0.8 + Math.random() * 0.6)
+      idle.current = window.setTimeout(() => {
+        if (!document.hidden) fire()
+        scheduleIdle()
+      }, next)
+    }
+    scheduleIdle()
+
     return () => {
       window.clearTimeout(mountId)
-      window.clearInterval(loopId)
-      window.clearTimeout(timer.current)
+      window.clearTimeout(idle.current)
+      window.clearTimeout(burst.current)
     }
-  }, [autoOnMount, interval])
-
-  const trigger = () => {
-    if (!onHover || reduced.current) return
-    setActive(true)
-    window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setActive(false), 900)
-  }
+  }, [autoOnMount, interval, fire])
 
   return (
-    <Tag className={`glitch ${active ? 'is-glitching' : ''} ${className}`} onPointerEnter={trigger}>
+    <Tag
+      className={`glitch ${active ? 'is-glitching' : ''} ${className}`}
+      onPointerEnter={onHover ? fire : undefined}
+    >
       {text}
       <span className="glitch__layer glitch__layer--a" aria-hidden="true">
         {text}

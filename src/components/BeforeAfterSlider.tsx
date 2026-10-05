@@ -44,6 +44,7 @@ export function BeforeAfterSlider({ data }: { data: Comparison }) {
         onPointerMove={onPointerMove}
         onPointerUp={stop}
         onPointerCancel={stop}
+        data-cursor="drag"
         style={{ ['--pos' as string]: `${pos}%` }}
       >
         {/* RTL timeline: the past sits on the right, today on the left. The base

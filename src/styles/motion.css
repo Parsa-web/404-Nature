@@ -1,0 +1,814 @@
+/* ==========================================================================
+   Motion pass.
+   Loaded last so it can refine the base styles without restructuring them.
+   Rules here only ever animate transform, opacity and clip-path.
+   ========================================================================== */
+
+:root {
+  /* Cinematic settle — slow out, no overshoot. */
+  --ease-cine: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Symmetrical, for hovers. */
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --------------------------------------------------------------- page swap */
+.page {
+  will-change: opacity, transform;
+}
+.page.is-entering {
+  animation: pageIn 0.72s var(--ease-cine) both;
+}
+.page.is-leaving {
+  animation: pageOut 0.28s var(--ease-soft) both;
+}
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pageOut {
+  to {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0) scale(0.997);
+  }
+}
+
+/* Darkness the page dips into, with a faint scanline wash: the archive
+   "re-seeking" the next record. */
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 480;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(130% 100% at 50% 50%, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.9));
+  transition: opacity 0.28s var(--ease-soft);
+}
+.veil.is-active {
+  opacity: 1;
+}
+.veil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.045) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* The old loader bar is replaced by the veil. */
+.route-loader {
+  display: none;
+}
+
+/* ------------------------------------------------------------ boot screen */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  display: grid;
+  place-items: center;
+  background: #000;
+  transition: opacity 0.5s var(--ease-cine), transform 0.5s var(--ease-cine);
+}
+.boot.is-leaving {
+  opacity: 0;
+  transform: scale(1.012);
+}
+.boot__inner {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  animation: bootIn 0.6s var(--ease-cine) both;
+}
+.boot__code {
+  font-size: clamp(3rem, 12vw, 5.5rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.boot__title {
+  font-size: var(--step-0);
+  color: var(--ink-dim);
+  letter-spacing: 0.08em;
+}
+.boot__bar {
+  margin-top: 1rem;
+  width: clamp(120px, 22vw, 190px);
+  height: 1px;
+  background: var(--line-strong);
+  overflow: hidden;
+  position: relative;
+}
+.boot__bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform-origin: right center;
+  animation: bootBar 1.1s var(--ease-cine) both;
+}
+@keyframes bootIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+}
+@keyframes bootBar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ---------------------------------------------------------- cursor outline */
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9400;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(244, 242, 239, 0.38);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: width 0.4s var(--ease-cine), height 0.4s var(--ease-cine),
+    border-color 0.4s var(--ease-soft), opacity 0.3s var(--ease-soft),
+    border-radius 0.4s var(--ease-cine);
+}
+.cursor-ring.is-visible {
+  opacity: 1;
+}
+.cursor-ring[data-mode='link'] {
+  width: 36px;
+  height: 36px;
+  border-color: rgba(244, 242, 239, 0.6);
+}
+.cursor-ring[data-mode='image'] {
+  width: 52px;
+  height: 52px;
+  border-color: rgba(244, 242, 239, 0.5);
+}
+.cursor-ring[data-mode='cta'] {
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  border-color: var(--accent);
+}
+.cursor-ring[data-mode='drag'] {
+  width: 48px;
+  height: 48px;
+  border-radius: 3px;
+  border-color: rgba(244, 242, 239, 0.75);
+}
+.cursor-ring.is-down {
+  width: 16px;
+  height: 16px;
+}
+
+/* ------------------------------------------------------------ scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition: opacity 1.05s var(--ease-cine), transform 1.05s var(--ease-cine);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+.reveal.is-in,
+.frame.is-revealed {
+  will-change: auto;
+}
+
+/* Thin divider that draws itself under each section heading (RTL: right to left). */
+.section-head {
+  position: relative;
+}
+.section-head::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: calc(clamp(2rem, 5vw, 4rem) * -0.5);
+  height: 1px;
+  background: var(--line-strong);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 1.2s var(--ease-cine) 0.15s;
+}
+.section-head.is-in::after {
+  transform: scaleX(1);
+}
+
+/* --------------------------------------------------------- image reveal */
+.frame img {
+  opacity: 0;
+  transform: scale(1.06);
+  clip-path: inset(0 0 100% 0);
+  transition: opacity 0.9s var(--ease-cine), transform 1.5s var(--ease-cine),
+    clip-path 1.25s var(--ease-cine);
+  will-change: transform, clip-path, opacity;
+}
+.frame.is-revealed img {
+  opacity: 1;
+  transform: scale(1);
+  clip-path: inset(0 0 0 0);
+}
+.frame::after {
+  transition: opacity 0.6s var(--ease-soft), background 0.6s var(--ease-soft);
+}
+
+/* ------------------------------------------------------------------- hero */
+/* Staggered entrance. Each child declares its own delay through --d. */
+.hero-item {
+  opacity: 0;
+  animation: heroIn 0.95s var(--ease-cine) both;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes heroIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* The 404 leads the sequence, just after the background starts uncovering. */
+.hero__404.hero-item {
+  animation-delay: 320ms;
+}
+
+/* The location card enters from the opposite side. */
+.hero-item--aside {
+  animation-name: heroInAside;
+}
+@keyframes heroInAside {
+  from {
+    opacity: 0;
+    transform: translate3d(-26px, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Background: slow uncover, then an almost imperceptible drift. */
+.hero__media {
+  animation: heroMediaIn 1.4s var(--ease-cine) both;
+}
+@keyframes heroMediaIn {
+  from {
+    opacity: 0;
+    clip-path: inset(12% 0 12% 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+.hero__media > .glitch-img > img {
+  animation: heroDrift 26s var(--ease-soft) 1.2s infinite alternate;
+  will-change: transform;
+}
+@keyframes heroDrift {
+  from {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.04) translate3d(0, -0.8%, 0);
+  }
+}
+.hero__scroll {
+  animation: heroIn 1s var(--ease-cine) 1.5s both;
+}
+.hero__scroll::after {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 2.2rem;
+  margin-top: 0.6rem;
+  margin-inline: auto;
+  background: linear-gradient(to bottom, var(--ink-faint), transparent);
+  animation: scrollHint 2.8s var(--ease-soft) infinite;
+}
+@keyframes scrollHint {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+    opacity: 0.3;
+    transform-origin: top center;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 0.9;
+    transform-origin: top center;
+  }
+}
+
+/* ------------------------------------------------------------------ glitch */
+/* A damaged archive record: short horizontal tears and a scanline pass,
+   with only a hint of colour separation. */
+.glitch__layer {
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+.glitch.is-glitching .glitch__layer--a,
+.glitch.is-glitching .glitch__layer--b {
+  animation-duration: 0.62s;
+  animation-timing-function: steps(2, end);
+  animation-iteration-count: 1;
+}
+.glitch.is-glitching .glitch__layer--a {
+  color: rgba(179, 38, 30, 0.75);
+  clip-path: inset(22% 0 55% 0);
+  animation-name: tearA;
+}
+.glitch.is-glitching .glitch__layer--b {
+  color: rgba(120, 198, 210, 0.5);
+  clip-path: inset(62% 0 18% 0);
+  animation-name: tearB;
+}
+@keyframes tearA {
+  0% { opacity: 0; transform: none; }
+  18% { opacity: 1; transform: translate3d(-4px, 0, 0); }
+  34% { opacity: 0.6; transform: translate3d(2px, 0, 0); }
+  52% { opacity: 1; transform: translate3d(-1px, 0, 0); }
+  70% { opacity: 0; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+@keyframes tearB {
+  0% { opacity: 0; transform: none; }
+  26% { opacity: 0.9; transform: translate3d(5px, 0, 0); }
+  44% { opacity: 0.5; transform: translate3d(-2px, 0, 0); }
+  62% { opacity: 0.8; transform: translate3d(1px, 0, 0); }
+  80% { opacity: 0; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+/* Scanline sweep + a single opacity flicker on the base text. */
+.glitch.is-glitching {
+  animation: flicker 0.62s steps(3, end) 1;
+}
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  22% { opacity: 0.82; }
+  48% { opacity: 1; }
+  64% { opacity: 0.9; }
+}
+.glitch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(5, 5, 5, 0.55) 0 1px,
+    transparent 1px 4px
+  );
+}
+.glitch.is-glitching::after {
+  animation: scan 0.62s linear 1;
+}
+@keyframes scan {
+  0% { opacity: 0; transform: translate3d(0, -25%, 0); }
+  30% { opacity: 0.85; }
+  100% { opacity: 0; transform: translate3d(0, 25%, 0); }
+}
+
+/* Image tearing: narrower slices, smaller displacement. */
+.glitch-img.is-glitching .glitch-img__slice--a {
+  opacity: 0.55;
+  clip-path: inset(30% 0 60% 0);
+  filter: saturate(0.5) contrast(1.15);
+  animation: sliceA 0.6s steps(3, end) 1;
+}
+.glitch-img.is-glitching .glitch-img__slice--b {
+  opacity: 0.45;
+  clip-path: inset(70% 0 22% 0);
+  filter: hue-rotate(-10deg) contrast(1.1);
+  animation: sliceB 0.6s steps(3, end) 1;
+}
+@keyframes sliceA {
+  0% { transform: translateX(0); opacity: 0; }
+  35% { transform: translateX(-1.6%); opacity: 0.55; }
+  100% { transform: translateX(0); opacity: 0; }
+}
+@keyframes sliceB {
+  0% { transform: translateX(0); opacity: 0; }
+  40% { transform: translateX(1.8%); opacity: 0.45; }
+  100% { transform: translateX(0); opacity: 0; }
+}
+
+/* ------------------------------------------------------------------- navbar */
+.nav {
+  animation: navIn 0.9s var(--ease-cine) 0.25s both;
+}
+@keyframes navIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.nav__links a {
+  transition: color 0.45s var(--ease-soft), transform 0.45s var(--ease-cine), opacity 0.45s var(--ease-soft);
+}
+.nav__links a:hover,
+.nav__links a:focus-visible {
+  transform: translate3d(0, -3px, 0);
+}
+/* RTL: the indicator draws from the right, the way the text reads. */
+.nav__links a::after {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.5s var(--ease-cine);
+}
+.nav__links a:hover::after,
+.nav__links a:focus-visible::after,
+.nav__links a.is-active::after {
+  width: 100%;
+  transform: scaleX(1);
+}
+.nav__brand {
+  transition: opacity 0.4s var(--ease-soft);
+}
+.nav__brand:hover {
+  opacity: 0.75;
+}
+.icon-btn svg {
+  transition: transform 0.45s var(--ease-cine), opacity 0.4s var(--ease-soft);
+}
+.icon-btn:hover svg {
+  transform: scale(1.08);
+}
+
+/* --------------------------------------------------------- archive surfaces */
+.loss__media .frame::after,
+.archive-row .frame::after,
+.related .frame::after {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.05) 55%);
+}
+.loss:hover .frame img,
+.archive-row:hover .frame img,
+.related a:hover .frame img,
+.wild-card:hover .frame img,
+.result-row:hover .frame img {
+  transform: scale(1.045);
+  transition: transform 0.75s var(--ease-cine);
+}
+.loss:hover .frame::after,
+.archive-row:hover .frame::after,
+.related a:hover .frame::after {
+  opacity: 0.72;
+}
+.loss__name,
+.archive-row h2,
+.related__body b {
+  display: inline-block;
+  transition: transform 0.6s var(--ease-cine);
+}
+.loss:hover .loss__name,
+.archive-row:hover h2,
+.related a:hover .related__body b {
+  transform: translate3d(-6px, 0, 0);
+}
+.loss__go svg,
+.btn__arrow,
+.result-row__go svg {
+  transition: transform 0.55s var(--ease-cine);
+}
+.loss:hover .loss__go svg,
+.loss__go:hover svg,
+.archive-row:hover .loss__go svg {
+  transform: translate3d(-6px, 0, 0);
+}
+.result-row:hover .result-row__go svg {
+  transform: translate3d(-7px, 0, 0);
+}
+.archive-row,
+.related a,
+.wild-card,
+.result-row,
+.data-block {
+  transition: background 0.6s var(--ease-soft), box-shadow 0.6s var(--ease-soft);
+}
+.archive-strip__item {
+  transition: background 0.6s var(--ease-soft);
+}
+.archive-strip__item::before {
+  transition: height 0.65s var(--ease-cine);
+}
+.archive-strip__item b {
+  display: inline-block;
+  transition: transform 0.6s var(--ease-cine);
+}
+.archive-strip__item:hover b {
+  transform: translate3d(-5px, 0, 0);
+}
+
+/* Borders that gain presence instead of jumping. */
+.related,
+.wild-grid,
+.loc-hero__facts,
+.data-grid,
+.loc-gallery {
+  transition: background 0.6s var(--ease-soft);
+}
+.related a:hover,
+.wild-card:hover,
+.data-block:hover {
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+/* ------------------------------------------------------------------ buttons */
+.btn {
+  transition: background 0.5s var(--ease-cine), border-color 0.5s var(--ease-cine),
+    color 0.5s var(--ease-cine), transform 0.5s var(--ease-cine);
+}
+.btn:hover,
+.btn:focus-visible {
+  transform: translate3d(0, -2px, 0);
+}
+.btn:hover .btn__arrow,
+.btn:focus-visible .btn__arrow {
+  transform: translate3d(-6px, 0, 0);
+}
+.btn:active {
+  transform: translate3d(0, 0, 0);
+}
+.loss__go {
+  transition: border-color 0.5s var(--ease-cine), gap 0.5s var(--ease-cine);
+}
+
+/* --------------------------------------------------- before / after slider */
+.ba {
+  will-change: auto;
+}
+.ba__past {
+  /* No transition: the clip must track the pointer exactly. */
+  transition: none;
+}
+.ba__handle {
+  transition: opacity 0.45s var(--ease-soft);
+  opacity: 0.75;
+  box-shadow: 0 0 10px rgba(244, 242, 239, 0.12);
+}
+.ba:hover .ba__handle,
+.ba:focus-within .ba__handle {
+  opacity: 1;
+  box-shadow: 0 0 14px rgba(244, 242, 239, 0.22);
+}
+.ba__knob {
+  transition: transform 0.5s var(--ease-cine), border-color 0.4s var(--ease-soft),
+    background 0.4s var(--ease-soft);
+}
+.ba:hover .ba__knob {
+  transform: translate(-50%, -50%) scale(1.08);
+  background: rgba(5, 5, 5, 0.9);
+}
+.ba:active .ba__knob {
+  transform: translate(-50%, -50%) scale(0.96);
+}
+.ba__tag {
+  opacity: 0.55;
+  transition: opacity 0.5s var(--ease-soft), transform 0.5s var(--ease-cine);
+  transform: translate3d(0, -4px, 0);
+}
+.ba:hover .ba__tag,
+.ba:focus-within .ba__tag {
+  opacity: 1;
+  transform: none;
+}
+
+/* -------------------------------------------------------------- mobile menu */
+.mobile-menu {
+  transition: clip-path 0.7s var(--ease-cine), opacity 0.4s var(--ease-soft);
+}
+.mobile-menu:not(.is-open) {
+  opacity: 0;
+}
+.mobile-menu.is-closing {
+  clip-path: inset(0 0 100% 0);
+}
+.mobile-menu__link {
+  transition: opacity 0.35s var(--ease-soft), transform 0.5s var(--ease-cine),
+    color 0.4s var(--ease-soft);
+}
+.mobile-menu.is-closing .mobile-menu__link {
+  animation: none;
+  opacity: 0;
+  transform: translate3d(0, -10px, 0);
+}
+.mobile-menu__link i {
+  transition: transform 0.5s var(--ease-cine), opacity 0.4s var(--ease-soft);
+}
+.mobile-menu__link:hover i,
+.mobile-menu__link:focus-visible i {
+  transform: translate3d(-4px, 0, 0);
+}
+
+/* ------------------------------------------------------------ search overlay */
+.search-overlay {
+  transition: opacity 0.42s var(--ease-soft);
+}
+.search-overlay__field {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  transition: opacity 0.55s var(--ease-cine) 0.08s, transform 0.55s var(--ease-cine) 0.08s;
+}
+.search-overlay.is-open .search-overlay__field {
+  opacity: 1;
+  transform: none;
+}
+.search-overlay__field input {
+  transition: opacity 0.4s var(--ease-soft);
+}
+.search-overlay.is-open .result-row,
+.search-page__results .result-row {
+  animation: rowIn 0.6s var(--ease-cine) both;
+}
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.search-chips button {
+  transition: color 0.4s var(--ease-soft), border-color 0.4s var(--ease-soft),
+    transform 0.45s var(--ease-cine);
+}
+.search-chips button:hover {
+  transform: translate3d(0, -2px, 0);
+}
+
+/* ----------------------------------------------------- filters & micro bits */
+.filters button {
+  transition: color 0.45s var(--ease-soft), border-color 0.45s var(--ease-soft),
+    background 0.45s var(--ease-soft), transform 0.45s var(--ease-cine);
+}
+.filters button:hover {
+  transform: translate3d(0, -2px, 0);
+}
+.filters button[aria-pressed='true'] {
+  transform: none;
+}
+.src-item {
+  transition: background 0.55s var(--ease-soft), padding-inline 0.6s var(--ease-cine);
+}
+.src-item:hover {
+  padding-inline: 0.9rem;
+}
+.src-item em {
+  display: inline-block;
+  transition: transform 0.5s var(--ease-cine);
+}
+.src-item:hover em {
+  transform: translate3d(-4px, 0, 0);
+}
+.crumbs a {
+  position: relative;
+  transition: color 0.4s var(--ease-soft);
+}
+.crumbs a::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.45s var(--ease-cine);
+}
+.crumbs a:hover::after,
+.crumbs a:focus-visible::after {
+  transform: scaleX(1);
+}
+.human__row {
+  transition: background 0.55s var(--ease-soft);
+}
+.human__row b {
+  display: inline-block;
+  transition: transform 0.6s var(--ease-cine);
+}
+.human__row:hover b {
+  transform: translate3d(-5px, 0, 0);
+}
+.timeline__row a,
+.data-block__src a {
+  transition: color 0.4s var(--ease-soft), border-color 0.4s var(--ease-soft);
+}
+.timeline__year {
+  display: inline-block;
+  transition: transform 0.6s var(--ease-cine), color 0.5s var(--ease-soft);
+}
+.timeline__row:hover .timeline__year {
+  transform: translate3d(-4px, 0, 0);
+  color: var(--accent);
+}
+
+/* ----------------------------------------------------------------- numbers */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+.bar__fill {
+  transition: width 1.3s var(--ease-cine) 0.15s;
+}
+
+/* ----------------------------------------------- final statement breathing */
+.final__line {
+  transition: opacity 1.2s var(--ease-cine), transform 1.2s var(--ease-cine);
+}
+
+/* ---------------------------------------------------------------- parallax */
+/* The hook only writes `--py`; composition stays here so it can never fight
+   the reveal or hover transforms. */
+.hero__media[data-parallax] {
+  transform: translate3d(0, var(--py, 0px), 0);
+}
+.frame img[data-parallax],
+.loc-hero__media img[data-parallax] {
+  height: 112%;
+  margin-block-start: -6%;
+}
+.frame img[data-parallax] {
+  transform: translate3d(0, var(--py, 0px), 0) scale(1.06);
+}
+.frame.is-revealed img[data-parallax] {
+  transform: translate3d(0, var(--py, 0px), 0) scale(1);
+}
+.loss:hover .frame img[data-parallax],
+.archive-row:hover .frame img[data-parallax] {
+  transform: translate3d(0, var(--py, 0px), 0) scale(1.045);
+}
+.loc-hero__media img[data-parallax] {
+  transform: translate3d(0, var(--py, 0px), 0) scale(1.02);
+}
+
+/* --------------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .page.is-entering,
+  .page.is-leaving,
+  .hero-item,
+  .hero__media,
+  .hero__media > .glitch-img > img,
+  .hero__scroll,
+  .nav,
+  .boot__inner,
+  .boot__bar::after,
+  .glitch.is-glitching,
+  .glitch.is-glitching::after,
+  .search-overlay.is-open .result-row,
+  .search-page__results .result-row {
+    animation: none !important;
+  }
+  .hero-item,
+  .hero__media,
+  .hero__scroll,
+  .nav {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+  .hero__scroll::after,
+  .glitch__layer,
+  .glitch-img__slice,
+  .veil {
+    display: none !important;
+  }
+  .frame img {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+  .section-head::after {
+    transform: scaleX(1);
+  }
+  [data-parallax] {
+    transform: none !important;
+  }
+}
