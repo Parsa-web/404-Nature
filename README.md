@@ -49,3 +49,4 @@ src/
   utils/        image URL helper, Persian text normalisation
   styles/       global design tokens + per-area stylesheets
 ```
+
