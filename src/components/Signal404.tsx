@@ -6,6 +6,7 @@ const TEXT = '۴۰۴'
  * base   — the only readable layer; never destroyed
  * ghost  — a permanent, almost invisible echo that wakes up during events
  * s1..s3 — horizontal strips, clipped and displaced during a collapse
+ * c1..c3 — vertical columns, one per glyph, for single-character displacement
  * scan   — a single sweep line that crosses the number
  *
  * All layers share the same glyphs, so the number stays legible even mid-event.
@@ -24,6 +25,15 @@ export function Signal404({ onPointerEnter }: { onPointerEnter?: () => void }) {
         {TEXT}
       </span>
       <span className="n404__slice n404__slice--3" aria-hidden="true">
+        {TEXT}
+      </span>
+      <span className="n404__col n404__col--1" aria-hidden="true">
+        {TEXT}
+      </span>
+      <span className="n404__col n404__col--2" aria-hidden="true">
+        {TEXT}
+      </span>
+      <span className="n404__col n404__col--3" aria-hidden="true">
         {TEXT}
       </span>
       <span className="n404__scan" aria-hidden="true" />

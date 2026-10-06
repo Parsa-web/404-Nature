@@ -2,12 +2,12 @@
    404 // SIGNAL LOST
    The hero as one failing archive, not a title with an effect on it.
 
-   OPENING                                     RUNNING
-     0ms    archive search (black + grain)       micro-errors every 2.8-6.5s
-     360ms  signal sweep -> "signal detected"      slip / ghost / tear, 70-130ms
-     620ms  404 impact: clip, slices, snap       signal collapse every 17-28s
-     880ms  stabilise                              404 + image tear together,
-     1020ms "طبیعت پیدا نشد", then the rest        diagnostics report LOST
+   OPENING (approved, unchanged)               RUNNING (post-intro system)
+     0ms    archive search (black + grain)       an event every 4.2-16.5s
+     360ms  signal sweep -> "signal detected"      ~78% micro    80-180ms
+     620ms  404 impact: clip, slices, snap         ~18% medium  360-460ms
+     880ms  stabilise                              ~5%  critical 820-1100ms
+     1020ms "طبیعت پیدا نشد", then the rest      then RECOVERING -> STABLE
 
    Only transform / opacity / clip-path / filter are animated.
    ========================================================================== */
@@ -78,8 +78,11 @@
   80% { opacity: 0.1; transform: translate3d(-3px, 2px, 0); }
   100% { opacity: 0.035; transform: none; }
 }
-.hero[data-glitch='collapse'] .hero__err-noise {
-  animation: noiseSurge 230ms steps(4, end) 1;
+.hero[data-glitch='medium-corruption'] .hero__err-noise {
+  animation: noiseSurge 360ms steps(4, end) 1;
+}
+.hero[data-glitch^='critical-'] .hero__err-noise {
+  animation: noiseSurge 520ms steps(5, end) 1;
 }
 @keyframes noiseSurge {
   0% { opacity: 0.3; transform: translate3d(-6px, 3px, 0); }
@@ -120,8 +123,16 @@
 .hero:not(.hero--quick) .hero__err-sweep {
   animation: sweep 420ms linear 300ms forwards;
 }
-.hero[data-glitch='collapse'] .hero__err-sweep {
-  animation: sweep 230ms linear 1;
+.hero[data-glitch='micro-scan'] .hero__err-sweep {
+  animation: sweep 180ms linear 1;
+  opacity: 0.5;
+}
+.hero[data-glitch='medium-corruption'] .hero__err-sweep {
+  animation: sweep 340ms linear 1;
+}
+/* Level 3: the sweep arrives at ~400ms, after the number has already slipped. */
+.hero[data-glitch^='critical-'] .hero__err-sweep {
+  animation: sweep 420ms linear 260ms 1;
 }
 @keyframes sweep {
   0% { opacity: 0; transform: translate3d(0, -120%, 0); }
@@ -158,9 +169,16 @@
 .hero:not(.hero--quick) .hero__err-tear {
   animation: errTear 300ms steps(3, end) 560ms forwards;
 }
-.hero[data-glitch='collapse'] .hero__err-tear,
-.hero[data-glitch='tear'] .hero__err-tear {
-  animation: errTear 220ms steps(3, end) 1;
+.hero[data-glitch='medium-tear'] .hero__err-tear,
+.hero[data-glitch='medium-corruption'] .hero__err-tear {
+  animation: errTear 300ms steps(3, end) 1;
+}
+.hero[data-glitch='critical-signal-loss'] .hero__err-tear,
+.hero[data-glitch='critical-frame-corruption'] .hero__err-tear {
+  animation: errTear 420ms steps(4, end) 180ms 1;
+}
+.hero[data-glitch='critical-horizontal-tear'] .hero__err-tear {
+  animation: errTear 620ms steps(5, end) 120ms 1;
 }
 @keyframes errTear {
   0% { opacity: 0; transform: translate3d(0, 0, 0) scaleX(1); }
@@ -186,8 +204,16 @@
 .hero:not(.hero--quick) .hero__err-red {
   animation: errRed 220ms steps(2, end) 600ms forwards;
 }
-.hero[data-glitch='collapse'] .hero__err-red {
-  animation: errRed 200ms steps(2, end) 1;
+/* Chromatic / accent artefact: level 2 and 3 only, never permanent. */
+.hero[data-glitch='critical-signal-loss'] .hero__err-red {
+  animation: errRed 260ms steps(2, end) 420ms 1;
+}
+.hero[data-glitch='critical-frame-corruption'] .hero__err-red,
+.hero[data-glitch='critical-horizontal-tear'] .hero__err-red {
+  animation: errRed 220ms steps(2, end) 300ms 1;
+}
+.hero[data-glitch='medium-corruption'] .hero__err-red {
+  animation: errRed 180ms steps(2, end) 1;
 }
 @keyframes errRed {
   0% { opacity: 0; transform: translate3d(0, 0, 0); }
@@ -278,6 +304,24 @@
 .n404__slice--3 {
   clip-path: inset(68% 0 -12% 0);
 }
+/* One column per glyph, so a single character can slip out of place
+   ("۴۰۴" reading for an instant as "۴۰ ۴") without the number breaking up. */
+.n404__col {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+}
+.n404__col--1 {
+  clip-path: inset(-12% 0 -12% 66.8%);
+}
+.n404__col--2 {
+  clip-path: inset(-12% 33.4% -12% 33.4%);
+}
+.n404__col--3 {
+  clip-path: inset(-12% 66.8% -12% 0);
+}
 .n404__scan {
   position: absolute;
   inset-inline: -6%;
@@ -351,82 +395,252 @@
   animation: heroIn 560ms var(--ease-cine) both;
 }
 
-/* --- micro-errors -------------------------------------------------------- */
-/* Attribute on, attribute off: a few frames, with no transition to smear it. */
-.hero[data-glitch='slip'] .n404__base,
-.hero[data-glitch='tear'] .n404__base,
-.hero[data-glitch='collapse'] .n404__base {
+/* ============================================================================
+   POST-INTRO ERROR SYSTEM
+   The intro above is approved and untouched. Everything below only reacts to
+   `data-glitch` / `data-recover`, written by useSignal once the hero is fully
+   visible. Three levels, one visual language:
+
+     micro     80-180ms   one isolated malfunction
+     medium    360-460ms  number + photograph fail together, diagnostics react
+     critical  820-1100ms the signature signal drop, then a slower recovery
+
+   Only transform / opacity / clip-path / filter animate, and every displaced
+   copy is a clipped layer inside the hero — so no event can shift layout,
+   change the hero height or create horizontal scroll.
+   ========================================================================== */
+
+/* The strips and columns only ever take over from the base, never add to it:
+   exactly one readable set of glyphs is on screen at any moment. */
+.hero[data-glitch='micro-slice'] .n404__base,
+.hero[data-glitch='micro-glyph'] .n404__base,
+.hero[data-glitch^='medium-'] .n404__base,
+.hero[data-glitch^='critical-'] .n404__base {
+  /* The finished intro animation still holds its last frame, so it has to be
+     released here before the strips can take over. */
+  animation: none;
   opacity: 0;
 }
-.hero[data-glitch='slip'] .n404__slice--1,
-.hero[data-glitch='slip'] .n404__slice--3,
-.hero[data-glitch='tear'] .n404__slice--1,
-.hero[data-glitch='tear'] .n404__slice--2,
-.hero[data-glitch='tear'] .n404__slice--3,
-.hero[data-glitch='collapse'] .n404__slice {
+.hero[data-glitch='micro-slice'] .n404__slice,
+.hero[data-glitch^='medium-'] .n404__slice,
+.hero[data-glitch^='critical-'] .n404__slice {
+  animation: none;
   opacity: 1;
 }
-/* slip — the middle band slides out of register */
-.hero[data-glitch='slip'] .n404__slice--2 {
+.hero[data-glitch='micro-glyph'] .n404__col {
+  animation: none;
   opacity: 1;
-  transform: translate3d(19px, 0, 0);
 }
-/* tear — the outer bands part in opposite directions */
-.hero[data-glitch='tear'] .n404__slice--1 {
-  transform: translate3d(-9px, 0, 0);
+
+/* --- level 1: micro ------------------------------------------------------ */
+/* Attribute on, attribute off: a few frames, with no transition to smear it. */
+
+/* slice — one thin horizontal band slides out of register */
+.hero[data-glitch='micro-slice'] .n404__slice--2 {
+  transform: translate3d(11px, 0, 0);
 }
-.hero[data-glitch='tear'] .n404__slice--3 {
-  transform: translate3d(7px, 0, 0);
-}
-.hero[data-glitch='tear'] .n404__scan {
-  opacity: 0.8;
-  transform: translate3d(0, 180%, 0);
-}
-/* ghost — a temporal echo, the base stays crisp underneath */
-.hero[data-glitch='ghost'] .n404__ghost {
+/* ghost — a temporal echo; the base stays crisp underneath */
+.hero[data-glitch='micro-ghost'] .n404__ghost {
+  animation: none;
   opacity: 0.4;
   transform: translate3d(6px, -2px, 0);
 }
+/* scan — a single interruption line crosses the number */
+.hero[data-glitch='micro-scan'] .n404__scan {
+  animation: n404Scan 180ms linear 1;
+}
+/* glyph — one character slips, for a fraction of a second */
+.hero[data-glitch='micro-glyph'] .n404__col--2 {
+  transform: translate3d(9px, 1px, 0);
+}
+/* frame — the photograph alone twitches; the number is untouched */
+.hero[data-glitch='micro-frame'] .glitch-img__slice--a {
+  opacity: 0.55;
+  clip-path: inset(38% 0 52% 0);
+  transform: translate3d(9px, 0, 0);
+}
 
-/* --- signal collapse ----------------------------------------------------- */
-/* The signature event: the number breaks into displaced strips, chromatic
-   separation appears for a few frames, then everything snaps back. */
-.hero[data-glitch='collapse'] .n404__slice--1 {
-  animation: colS1 230ms steps(3, end) 1;
+/* --- level 2: medium ----------------------------------------------------- */
+/* Noticeable: a few strips move, the image tears with them, the diagnostic
+   line drops to UNSTABLE and then reports the recovery. */
+.hero[data-glitch='medium-tear'] .n404__slice--1 {
+  animation: medS1 460ms steps(4, end) 1;
 }
-.hero[data-glitch='collapse'] .n404__slice--2 {
-  animation: colS2 230ms steps(3, end) 1;
+.hero[data-glitch='medium-tear'] .n404__slice--2 {
+  animation: medS2 460ms steps(4, end) 1;
 }
-.hero[data-glitch='collapse'] .n404__slice--3 {
-  animation: colS3 230ms steps(3, end) 1;
+.hero[data-glitch='medium-tear'] .n404__slice--3 {
+  animation: medS3 460ms steps(4, end) 1;
 }
-.hero[data-glitch='collapse'] .n404__ghost {
-  animation: colGhost 230ms steps(3, end) 1;
-}
-.hero[data-glitch='collapse'] .n404__scan {
-  animation: n404Scan 230ms linear 1;
-}
-@keyframes colS1 {
-  0% { transform: translate3d(-24px, 0, 0); }
-  35% { transform: translate3d(11px, 0, 0); }
-  70% { transform: translate3d(-6px, 0, 0); }
+@keyframes medS1 {
+  0% { transform: translate3d(-13px, 0, 0); }
+  30% { transform: translate3d(7px, 0, 0); }
+  62% { transform: translate3d(-4px, 0, 0); }
   100% { transform: none; }
 }
-@keyframes colS2 {
-  0% { transform: translate3d(28px, 0, 0); }
-  35% { transform: translate3d(-13px, 0, 0); }
-  70% { transform: translate3d(5px, 0, 0); }
+@keyframes medS2 {
+  0% { transform: translate3d(16px, 0, 0); }
+  34% { transform: translate3d(-8px, 0, 0); }
+  70% { transform: translate3d(3px, 0, 0); }
   100% { transform: none; }
 }
-@keyframes colS3 {
-  0% { transform: translate3d(-14px, 0, 0); }
-  40% { transform: translate3d(18px, 0, 0); }
+@keyframes medS3 {
+  0% { transform: translate3d(-8px, 0, 0); }
+  40% { transform: translate3d(10px, 0, 0); }
   100% { transform: none; }
 }
-@keyframes colGhost {
-  0% { opacity: 0.55; text-shadow: 5px 0 rgba(179, 38, 30, 0.85), -5px 0 rgba(120, 198, 210, 0.55); }
-  60% { opacity: 0.3; text-shadow: -3px 0 rgba(179, 38, 30, 0.5), 3px 0 rgba(120, 198, 210, 0.3); }
+.hero[data-glitch='medium-tear'] .n404__scan,
+.hero[data-glitch='medium-corruption'] .n404__scan {
+  animation: n404Scan 320ms linear 1;
+}
+/* medium-image — the archive frame carries the failure, the number only drifts */
+.hero[data-glitch='medium-image'] .n404__slice--2 {
+  transform: translate3d(8px, 0, 0);
+}
+.hero[data-glitch='medium-image'] .n404__ghost {
+  animation: medGhost 420ms steps(3, end) 1;
+}
+/* medium-corruption — a briefly corrupted frame: strips, echo, scan, grain */
+.hero[data-glitch='medium-corruption'] .n404__slice--1 {
+  animation: medS2 360ms steps(3, end) 1;
+}
+.hero[data-glitch='medium-corruption'] .n404__slice--2 {
+  animation: medS1 360ms steps(3, end) 1;
+}
+.hero[data-glitch='medium-corruption'] .n404__slice--3 {
+  animation: medS3 360ms steps(3, end) 1;
+}
+.hero[data-glitch='medium-corruption'] .n404__ghost,
+.hero[data-glitch='medium-tear'] .n404__ghost {
+  animation: medGhost 360ms steps(3, end) 1;
+}
+/* Chromatic separation exists only inside an event, and only here and above. */
+@keyframes medGhost {
+  0% { opacity: 0.38; text-shadow: 3px 0 rgba(179, 38, 30, 0.6), -3px 0 rgba(120, 198, 210, 0.38); }
+  55% { opacity: 0.2; text-shadow: -2px 0 rgba(179, 38, 30, 0.4), 2px 0 rgba(120, 198, 210, 0.22); }
   100% { opacity: 0; text-shadow: none; }
+}
+
+/* --- level 3: critical --------------------------------------------------- */
+/* The signature failure. Same vocabulary as above, clearly larger, and staged
+   so the viewer can read it: slip -> strips -> scan -> chroma -> recovery.
+   Durations match the JS event lengths exactly (1100 / 820 / 900ms). */
+.hero[data-glitch='critical-signal-loss'] .n404__slice--1 {
+  animation: critS1 1100ms steps(6, end) 1;
+}
+.hero[data-glitch='critical-signal-loss'] .n404__slice--2 {
+  animation: critS2 1100ms steps(6, end) 1;
+}
+.hero[data-glitch='critical-signal-loss'] .n404__slice--3 {
+  animation: critS3 1100ms steps(6, end) 1;
+}
+.hero[data-glitch='critical-signal-loss'] .n404__ghost {
+  animation: critGhost 1100ms steps(5, end) 1;
+}
+.hero[data-glitch='critical-signal-loss'] .n404__scan {
+  animation: n404Scan 520ms linear 300ms 1;
+}
+@keyframes critS1 {
+  0%, 8% { transform: none; }               /* 0ms    stable */
+  14% { transform: translate3d(-7px, 0, 0); } /* 150ms  subtle displacement */
+  28% { transform: translate3d(-26px, 0, 0); }/* 300ms  the strips split */
+  46% { transform: translate3d(14px, 0, 0); }
+  58% { transform: translate3d(-19px, 0, 0); }/* 650ms  still legible */
+  72% { transform: translate3d(6px, 0, 0); }  /* 750ms  recovery begins */
+  86% { transform: translate3d(-2px, 0, 0); }
+  100% { transform: none; }
+}
+@keyframes critS2 {
+  0%, 8% { transform: none; }
+  14% { transform: translate3d(5px, 0, 0); }
+  28% { transform: translate3d(31px, 0, 0); }
+  46% { transform: translate3d(-17px, 0, 0); }
+  58% { transform: translate3d(22px, 0, 0); }
+  72% { transform: translate3d(-7px, 0, 0); }
+  86% { transform: translate3d(3px, 0, 0); }
+  100% { transform: none; }
+}
+@keyframes critS3 {
+  0%, 10% { transform: none; }
+  18% { transform: translate3d(9px, 0, 0); }
+  32% { transform: translate3d(-21px, 0, 0); }
+  50% { transform: translate3d(16px, 0, 0); }
+  64% { transform: translate3d(-9px, 0, 0); }
+  80% { transform: translate3d(4px, 0, 0); }
+  100% { transform: none; }
+}
+@keyframes critGhost {
+  0%, 12% { opacity: 0; text-shadow: none; }
+  24% { opacity: 0.4; transform: translate3d(7px, -2px, 0); }
+  /* 450ms — very brief chromatic separation, then it is gone again */
+  40% { opacity: 0.6; text-shadow: 5px 0 rgba(179, 38, 30, 0.85), -5px 0 rgba(120, 198, 210, 0.55); }
+  56% { opacity: 0.34; text-shadow: -3px 0 rgba(179, 38, 30, 0.5), 3px 0 rgba(120, 198, 210, 0.3); }
+  78% { opacity: 0.16; text-shadow: none; }
+  100% { opacity: 0; transform: none; text-shadow: none; }
+}
+/* critical-frame-corruption — the rendered frame itself is wrong */
+.hero[data-glitch='critical-frame-corruption'] .n404__slice--1 {
+  animation: critS3 820ms steps(5, end) 1;
+}
+.hero[data-glitch='critical-frame-corruption'] .n404__slice--2 {
+  animation: critS1 820ms steps(5, end) 1;
+}
+.hero[data-glitch='critical-frame-corruption'] .n404__slice--3 {
+  animation: critS2 820ms steps(5, end) 1;
+}
+.hero[data-glitch='critical-frame-corruption'] .n404__ghost {
+  animation: critGhost 820ms steps(4, end) 1;
+}
+.hero[data-glitch='critical-frame-corruption'] .n404__scan {
+  animation: n404Scan 420ms linear 160ms 1;
+}
+/* critical-horizontal-tear — the number is pulled apart horizontally */
+.hero[data-glitch='critical-horizontal-tear'] .n404__slice--1 {
+  animation: critTearA 900ms steps(5, end) 1;
+}
+.hero[data-glitch='critical-horizontal-tear'] .n404__slice--2 {
+  animation: critTearB 900ms steps(5, end) 1;
+}
+.hero[data-glitch='critical-horizontal-tear'] .n404__slice--3 {
+  animation: critTearA 900ms steps(5, end) 60ms 1;
+}
+.hero[data-glitch='critical-horizontal-tear'] .n404__ghost {
+  animation: medGhost 900ms steps(4, end) 1;
+}
+@keyframes critTearA {
+  0%, 10% { transform: none; }
+  22% { transform: translate3d(-18px, 0, 0); }
+  44% { transform: translate3d(-34px, 0, 0); }
+  62% { transform: translate3d(-12px, 0, 0); }
+  80% { transform: translate3d(4px, 0, 0); }
+  100% { transform: none; }
+}
+@keyframes critTearB {
+  0%, 10% { transform: none; }
+  22% { transform: translate3d(14px, 0, 0); }
+  44% { transform: translate3d(29px, 0, 0); }
+  62% { transform: translate3d(9px, 0, 0); }
+  80% { transform: translate3d(-5px, 0, 0); }
+  100% { transform: none; }
+}
+
+/* --- recovery ------------------------------------------------------------ */
+/* Failure is sharp, recovery is controlled: the number eases back into
+   register instead of simply snapping off. */
+.hero[data-phase][data-recover] .n404__base {
+  animation: recoverType 540ms var(--ease-soft) both;
+}
+@keyframes recoverType {
+  0% { opacity: 0.45; transform: translate3d(3px, 0, 0); }
+  35% { opacity: 0.92; transform: translate3d(-1px, 0, 0); }
+  100% { opacity: 1; transform: none; }
+}
+.hero[data-phase][data-recover] .hero__media > .glitch-img {
+  animation: recoverFrame 540ms var(--ease-soft) both;
+}
+@keyframes recoverFrame {
+  0% { transform: translate3d(-3px, 0, 0); filter: saturate(0.8) contrast(1.04); }
+  100% { transform: none; filter: none; }
 }
 
 /* ------------------------------------------------------------ hero image */
@@ -457,32 +671,85 @@
   from { transform: scale(1) translate3d(0, 0, 0); }
   to { transform: scale(1.035) translate3d(0, -0.7%, 0); }
 }
-/* Frame corruption, fired by the same events as the number. */
-.hero[data-glitch='tear'] .hero__media > .glitch-img,
-.hero[data-glitch='slip'] .hero__media > .glitch-img {
+/* Frame corruption, fired by the same events as the number: one signal
+   failure, two surfaces. Level 1 is nearly invisible here, level 2 is a small
+   horizontal displacement, level 3 is clearly corrupted — never destroyed. */
+.hero[data-glitch='micro-slice'] .hero__media > .glitch-img,
+.hero[data-glitch='micro-glyph'] .hero__media > .glitch-img {
+  transform: translate3d(-3px, 0, 0);
+}
+.hero[data-glitch='micro-frame'] .hero__media > .glitch-img {
   transform: translate3d(-5px, 0, 0);
 }
-.hero[data-glitch='collapse'] .hero__media > .glitch-img {
-  animation: imgKick 230ms steps(3, end) 1;
+.hero[data-glitch^='medium-'] .hero__media > .glitch-img {
+  animation: imgKick 420ms steps(4, end) 1;
+}
+.hero[data-glitch='critical-signal-loss'] .hero__media > .glitch-img {
+  animation: imgCrit 1100ms steps(6, end) 1;
+}
+.hero[data-glitch='critical-frame-corruption'] .hero__media > .glitch-img {
+  animation: imgCrit 820ms steps(5, end) 1;
+}
+.hero[data-glitch='critical-horizontal-tear'] .hero__media > .glitch-img {
+  animation: imgCrit 900ms steps(5, end) 1;
 }
 @keyframes imgKick {
-  0% { transform: translate3d(-14px, 0, 0); filter: saturate(0.55) contrast(1.12); }
-  40% { transform: translate3d(9px, 0, 0); filter: saturate(0.8) contrast(1.06); }
+  0% { transform: translate3d(-11px, 0, 0); filter: saturate(0.6) contrast(1.1); }
+  40% { transform: translate3d(7px, 0, 0); filter: saturate(0.85) contrast(1.05); }
   75% { transform: translate3d(-3px, 0, 0); }
   100% { transform: none; filter: none; }
 }
-.hero[data-glitch='collapse'] .glitch-img__slice--a,
-.hero[data-glitch='tear'] .glitch-img__slice--a {
-  opacity: 0.75;
-  clip-path: inset(24% 0 60% 0);
-  transform: translate3d(22px, 0, 0);
-  filter: saturate(0.4) contrast(1.2);
+@keyframes imgCrit {
+  0%, 10% { transform: none; }
+  /* 200ms — the photograph starts to distort after the number has slipped */
+  22% { transform: translate3d(-9px, 0, 0); filter: saturate(0.7) contrast(1.08); }
+  40% { transform: translate3d(13px, 0, 0); filter: saturate(0.5) contrast(1.14); }
+  /* 550ms — the stronger slice displacement */
+  56% { transform: translate3d(-16px, 0, 0); filter: saturate(0.45) contrast(1.16); }
+  74% { transform: translate3d(6px, 0, 0); filter: saturate(0.75) contrast(1.06); }
+  100% { transform: none; filter: none; }
 }
-.hero[data-glitch='collapse'] .glitch-img__slice--b {
-  opacity: 0.6;
-  clip-path: inset(68% 0 16% 0);
-  transform: translate3d(-18px, 0, 0);
-  filter: hue-rotate(-12deg) contrast(1.1);
+/* Displaced image strips. Clipped bands only — the frame keeps its box. */
+.hero[data-glitch='medium-image'] .glitch-img__slice--a,
+.hero[data-glitch='medium-tear'] .glitch-img__slice--a,
+.hero[data-glitch='medium-corruption'] .glitch-img__slice--a {
+  opacity: 0.7;
+  clip-path: inset(26% 0 58% 0);
+  transform: translate3d(18px, 0, 0);
+  filter: saturate(0.45) contrast(1.18);
+}
+.hero[data-glitch='medium-image'] .glitch-img__slice--b,
+.hero[data-glitch='medium-corruption'] .glitch-img__slice--b {
+  opacity: 0.5;
+  clip-path: inset(66% 0 20% 0);
+  transform: translate3d(-13px, 0, 0);
+  filter: hue-rotate(-10deg) contrast(1.08);
+}
+.hero[data-glitch^='critical-'] .glitch-img__slice--a {
+  animation: imgSliceA var(--crit-dur, 900ms) steps(4, end) 1;
+}
+.hero[data-glitch^='critical-'] .glitch-img__slice--b {
+  animation: imgSliceB var(--crit-dur, 900ms) steps(4, end) 1;
+}
+.hero[data-glitch='critical-signal-loss'] {
+  --crit-dur: 1100ms;
+}
+.hero[data-glitch='critical-frame-corruption'] {
+  --crit-dur: 820ms;
+}
+@keyframes imgSliceA {
+  0%, 14% { opacity: 0; transform: none; }
+  26% { opacity: 0.8; clip-path: inset(22% 0 62% 0); transform: translate3d(26px, 0, 0); }
+  54% { opacity: 0.85; clip-path: inset(30% 0 54% 0); transform: translate3d(-22px, 0, 0); }
+  78% { opacity: 0.4; transform: translate3d(8px, 0, 0); }
+  100% { opacity: 0; transform: none; }
+}
+@keyframes imgSliceB {
+  0%, 20% { opacity: 0; transform: none; }
+  34% { opacity: 0.6; clip-path: inset(64% 0 18% 0); transform: translate3d(-20px, 0, 0); }
+  60% { opacity: 0.7; clip-path: inset(70% 0 12% 0); transform: translate3d(16px, 0, 0); filter: hue-rotate(-14deg); }
+  82% { opacity: 0.3; transform: translate3d(-6px, 0, 0); }
+  100% { opacity: 0; transform: none; filter: none; }
 }
 
 /* --------------------------------------------- typography after the error */
@@ -543,9 +810,16 @@
   color: var(--ink-dim);
   transition: color 300ms var(--ease-soft);
 }
+.hero__diag[data-signal='unstable'] dd {
+  color: var(--ink);
+}
 .hero__diag[data-signal='lost'] dd,
 .hero__diag[data-signal='recovering'] dd {
   color: var(--accent);
+}
+/* A small text swap with one flicker is enough — no UI movement. */
+.hero__diag[data-signal='unstable'] div:first-child dd {
+  animation: diagBlink 200ms steps(2, end) 1;
 }
 .hero__diag[data-signal='lost'] div:first-child dd {
   animation: diagBlink 230ms steps(2, end) 2;
@@ -598,27 +872,51 @@
   .n404 {
     font-size: clamp(5.4rem, 36vw, 13rem);
   }
-  .hero[data-glitch='slip'] .n404__slice--2 {
-    transform: translate3d(8px, 0, 0);
+  .hero[data-glitch='micro-slice'] .n404__slice--2 {
+    transform: translate3d(7px, 0, 0);
   }
-  .hero[data-glitch='tear'] .n404__slice--1 {
-    transform: translate3d(-5px, 0, 0);
+  .hero[data-glitch='micro-glyph'] .n404__col--2 {
+    transform: translate3d(6px, 0, 0);
   }
-  .hero[data-glitch='tear'] .n404__slice--3 {
-    transform: translate3d(4px, 0, 0);
+  .hero[data-glitch='medium-image'] .n404__slice--2 {
+    transform: translate3d(5px, 0, 0);
   }
-  .hero[data-glitch='collapse'] .n404__slice--1,
-  .hero[data-glitch='collapse'] .n404__slice--2,
-  .hero[data-glitch='collapse'] .n404__slice--3 {
-    animation-name: colMobile;
+  /* Half-amplitude strips on a phone: a displaced copy can never reach the
+     viewport edge, so nothing can create horizontal scroll. */
+  .hero[data-glitch^='medium-'] .n404__slice--1,
+  .hero[data-glitch^='medium-'] .n404__slice--2,
+  .hero[data-glitch^='medium-'] .n404__slice--3 {
+    animation-name: slicesMobile;
   }
-  @keyframes colMobile {
-    0% { transform: translate3d(-11px, 0, 0); }
-    45% { transform: translate3d(9px, 0, 0); }
+  .hero[data-glitch^='critical-'] .n404__slice--1,
+  .hero[data-glitch^='critical-'] .n404__slice--3 {
+    animation-name: critMobileA;
+  }
+  .hero[data-glitch^='critical-'] .n404__slice--2 {
+    animation-name: critMobileB;
+  }
+  @keyframes slicesMobile {
+    0% { transform: translate3d(-8px, 0, 0); }
+    45% { transform: translate3d(6px, 0, 0); }
+    100% { transform: none; }
+  }
+  @keyframes critMobileA {
+    0%, 10% { transform: none; }
+    28% { transform: translate3d(-13px, 0, 0); }
+    52% { transform: translate3d(8px, 0, 0); }
+    78% { transform: translate3d(-4px, 0, 0); }
+    100% { transform: none; }
+  }
+  @keyframes critMobileB {
+    0%, 10% { transform: none; }
+    28% { transform: translate3d(15px, 0, 0); }
+    52% { transform: translate3d(-9px, 0, 0); }
+    78% { transform: translate3d(5px, 0, 0); }
     100% { transform: none; }
   }
   /* Chromatic separation is an accent, not a mobile cost centre. */
-  .hero[data-glitch='collapse'] .glitch-img__slice--b {
+  .hero[data-glitch^='critical-'] .glitch-img__slice--b,
+  .hero[data-glitch='medium-corruption'] .glitch-img__slice--b {
     display: none;
   }
   .hero__media > .glitch-img > img {
@@ -664,6 +962,25 @@
   .hero__inner {
     transform: none !important;
     opacity: 1 !important;
+  }
+  /* The archive is still unstable — it just says so quietly. The number stays
+     fully visible, the diagnostic line keeps reporting, and the only motion is
+     a slow dim with no flashing and no displacement. */
+  .n404__base,
+  .hero__media > .glitch-img {
+    transition: opacity 320ms var(--ease-soft), filter 320ms var(--ease-soft);
+  }
+  .hero[data-glitch='calm-micro'] .n404__base {
+    opacity: 0.86 !important;
+  }
+  .hero[data-glitch='calm-signal'] .n404__base {
+    opacity: 0.74 !important;
+  }
+  .hero[data-glitch='calm-signal'] .hero__media > .glitch-img {
+    filter: saturate(0.78) !important;
+  }
+  .hero__diag[data-signal] dd {
+    animation: none !important;
   }
 }
 

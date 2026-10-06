@@ -14,6 +14,7 @@ import { useSeo } from '../hooks/useSeo'
 
 const SIGNAL_LABEL = {
   stable: 'پایدار',
+  unstable: 'ناپایدار',
   lost: 'قطع',
   recovering: 'در حال بازیابی',
 } as const
