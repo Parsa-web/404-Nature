@@ -5,16 +5,15 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 concurrency:
   group: pages-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,7 +25,15 @@ jobs:
         run: |
           cp dist/index.html dist/404.html
           touch dist/.nojekyll
+      # Path A: the official Pages artifact (used when the site's source is
+      # "GitHub Actions").
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      # Path B: the gh-pages branch (used when the source is a branch).
+      # Kept so the deployment works whichever way Pages is configured.
       - name: Publish dist to the gh-pages branch
+        continue-on-error: true
         run: |
           cd dist
           git init -q
@@ -37,3 +44,17 @@ jobs:
           git push -q --force \
             "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" \
             HEAD:gh-pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
