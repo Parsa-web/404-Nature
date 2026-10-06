@@ -10,6 +10,7 @@ import './styles/archive.css'
 import './styles/location.css'
 import './styles/data.css'
 import './styles/motion.css'
+import './styles/sequence.css'
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
 

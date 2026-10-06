@@ -9,6 +9,7 @@ import { TYPE_LABEL } from '../data/types'
 import { IMAGES, commons } from '../utils/images'
 import { useReveal } from '../hooks/useReveal'
 import { useParallax } from '../hooks/useParallax'
+import { useHeroSequence } from '../hooks/useHeroSequence'
 import { useSeo } from '../hooks/useSeo'
 
 const CATEGORIES = [
@@ -32,6 +33,7 @@ const HUMAN_ROWS = [
 export function Home() {
   useReveal()
   useParallax()
+  const heroRef = useHeroSequence<HTMLElement>()
   useSeo({
     title: '۴۰۴ — طبیعت پیدا نشد | آرشیو محیط زیست ایران',
     description:
@@ -44,7 +46,14 @@ export function Home() {
   return (
     <>
       {/* ---------------- HERO ---------------- */}
-      <section className="hero" aria-labelledby="hero-title">
+      <section className="hero" aria-labelledby="hero-title" ref={heroRef}>
+        {/* The error event itself: noise, scanlines, a tear and one red artifact.
+            Pure overlay — removed from the compositor once the hero stabilises. */}
+        <div className="hero__err hero__err--under" aria-hidden="true">
+          <span className="hero__err-black" />
+          <span className="hero__err-noise" />
+        </div>
+
         <div className="hero__media" data-parallax="26">
           <GlitchImage
             file={IMAGES.urmiaGround}
@@ -52,43 +61,64 @@ export function Home() {
             alt="ساحل خشک و نمکی دریاچه ارومیه در غروب"
             credit="Solmaz Daryani — Wikimedia Commons (CC BY-SA)"
             eager
+            mountDelay={430}
+            mountBurstMs={240}
+            interval={12000}
+            idleBurstMs={120}
           />
         </div>
 
         <div className="shell hero__inner">
           <div>
-            {/* Staggered entrance: background, 404, title, claim, CTA. */}
-            <p className="eyebrow hero-item" style={{ ['--d' as string]: '160ms' }}>
+            <p className="eyebrow hero-item" style={{ ['--d' as string]: '620ms' }}>
               آرشیو محیط زیست ایران
             </p>
             <h1 id="hero-title" style={{ marginTop: '1.2rem' }}>
               <GlitchText
                 as="span"
                 text="۴۰۴"
-                className="hero__404 hero-item"
-                autoOnMount
-                interval={14000}
+                className="hero__404"
+                mountDelay={430}
+                mountBurstMs={220}
+                onHover
+                interval={12000}
+                idleBurstMs={110}
               />
-              <span className="hero__title hero-item" style={{ ['--d' as string]: '520ms' }}>
+              <span className="hero__title hero-item" style={{ ['--d' as string]: '760ms' }}>
                 طبیعت پیدا نشد
               </span>
             </h1>
-            <p className="hero__claim hero-item" style={{ ['--d' as string]: '720ms' }}>
+            <p className="hero__claim hero-item" style={{ ['--d' as string]: '980ms' }}>
               چیزی که دنبالش هستید،
               <br />
               ممکن است دیگر وجود نداشته باشد.
             </p>
-            <div className="hero__cta hero-item" style={{ ['--d' as string]: '900ms' }}>
+            <div className="hero__cta hero-item" style={{ ['--d' as string]: '1160ms' }}>
               <Link className="btn btn--accent" to="/lost-places" data-cursor="cta">
                 کاوش در طبیعت گمشده
                 <ArrowIcon className="btn__arrow" />
               </Link>
             </div>
+            {/* Diagnostic metadata — deliberately tiny and secondary. */}
+            <dl className="hero__diag hero-item" style={{ ['--d' as string]: '1320ms' }}>
+              <div>
+                <dt>خطا</dt>
+                <dd>۴۰۴</dd>
+              </div>
+              <div>
+                <dt>آرشیو</dt>
+                <dd>طبیعت</dd>
+              </div>
+              <div>
+                <dt>وضعیت</dt>
+                <dd>پیدا نشد</dd>
+              </div>
+            </dl>
           </div>
 
           <aside
             className="hero__card hero-item hero-item--aside"
-            style={{ ['--d' as string]: '700ms' }}
+            style={{ ['--d' as string]: '1040ms' }}
             aria-label="نمونه‌ای از آرشیو"
           >
             <Frame file={IMAGES.anzaliB} alt="تالاب انزلی از روی قایق محلی" ratio="43" width={720} sizes="340px" />
@@ -117,6 +147,14 @@ export function Home() {
         </div>
 
         <span className="hero__scroll latin">SCROLL</span>
+
+        {/* Scanlines, tear and the single red artifact sit above everything,
+            including the 404, so the type is seen through the failure. */}
+        <div className="hero__err hero__err--over" aria-hidden="true">
+          <span className="hero__err-scan" />
+          <span className="hero__err-tear" />
+          <span className="hero__err-red" />
+        </div>
       </section>
 
       {/* ---------------- ARCHIVE CATEGORIES ---------------- */}

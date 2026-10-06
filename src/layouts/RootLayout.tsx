@@ -4,7 +4,6 @@ import { Navbar } from '../components/Navbar'
 import { MobileMenu } from '../components/MobileMenu'
 import { SearchOverlay } from '../components/SearchOverlay'
 import { Footer } from '../components/Footer'
-import { BootScreen } from '../components/BootScreen'
 import { CustomCursor } from '../components/CustomCursor'
 import { useTransition } from '../motion/transition'
 
@@ -19,7 +18,6 @@ export function RootLayout() {
         پرش به محتوای اصلی
       </a>
 
-      <BootScreen />
       <CustomCursor />
 
       <Navbar onOpenMenu={() => setMenu(true)} onOpenSearch={() => setSearch(true)} />

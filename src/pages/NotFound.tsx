@@ -12,7 +12,7 @@ export function NotFound() {
   return (
     <section className="nf">
       <div>
-        <GlitchText as="p" text="404" className="nf__code latin" autoOnMount interval={3600} />
+        <GlitchText as="p" text="404" className="nf__code latin" mountDelay={260} mountBurstMs={220} interval={9000} idleBurstMs={110} />
         <h1>این صفحه پیدا نشد.</h1>
         <p className="nf__q">
           اما مسئله اصلی این است:

@@ -4,33 +4,45 @@ interface Props {
   text: string
   as?: ElementType
   className?: string
-  /** Fires once shortly after mount — used for entrances and route changes. */
-  autoOnMount?: boolean
-  /** Fires on pointer enter. */
+  /** Fire one burst this long after mount. Omit for none. */
+  mountDelay?: number
+  /** Duration of the mount burst — the single hard "system error" impact. */
+  mountBurstMs?: number
+  /** Fire a very short burst on pointer enter. */
   onHover?: boolean
-  /** Average gap between idle bursts, in ms. Omit for no idle loop. */
+  /** Average gap between rare idle bursts, in ms. Omit for no idle loop. */
   interval?: number
+  /** Duration of idle / hover bursts. Kept tiny: "did I just see that?" */
+  idleBurstMs?: number
 }
 
-const BURST_MS = 620
+type Mode = 'off' | 'soft' | 'hard'
 
 /**
- * Storytelling device, not decoration: one short tear-and-scanline burst, then
- * back to a clean state. Idle bursts are irregular on purpose — a steady pulse
- * reads as a loading spinner, an irregular one reads as a damaged record.
- * Disabled entirely when the user prefers reduced motion.
+ * A damaged archive record, not decoration. One hard burst during the hero
+ * entrance, then only rare, very short micro-glitches. Disabled entirely for
+ * users who prefer reduced motion.
  */
-export function GlitchText({ text, as: Tag = 'span', className = '', autoOnMount, onHover, interval }: Props) {
-  const [active, setActive] = useState(false)
+export function GlitchText({
+  text,
+  as: Tag = 'span',
+  className = '',
+  mountDelay,
+  mountBurstMs = 220,
+  onHover,
+  interval,
+  idleBurstMs = 110,
+}: Props) {
+  const [mode, setMode] = useState<Mode>('off')
   const burst = useRef<number | undefined>(undefined)
   const idle = useRef<number | undefined>(undefined)
   const reduced = useRef(false)
 
-  const fire = useCallback(() => {
+  const fire = useCallback((ms: number, hard: boolean) => {
     if (reduced.current) return
-    setActive(true)
+    setMode(hard ? 'hard' : 'soft')
     window.clearTimeout(burst.current)
-    burst.current = window.setTimeout(() => setActive(false), BURST_MS)
+    burst.current = window.setTimeout(() => setMode('off'), ms)
   }, [])
 
   useEffect(() => {
@@ -38,16 +50,15 @@ export function GlitchText({ text, as: Tag = 'span', className = '', autoOnMount
     if (reduced.current) return
 
     let mountId: number | undefined
-    if (autoOnMount) mountId = window.setTimeout(fire, 520)
+    if (mountDelay !== undefined) mountId = window.setTimeout(() => fire(mountBurstMs, true), mountDelay)
 
     const scheduleIdle = () => {
       if (!interval) return
-      // +/- 40% jitter so bursts never feel metronomic.
-      const next = interval * (0.8 + Math.random() * 0.6)
+      // +/- 40% jitter so bursts never read as a metronome.
       idle.current = window.setTimeout(() => {
-        if (!document.hidden) fire()
+        if (!document.hidden) fire(idleBurstMs, false)
         scheduleIdle()
-      }, next)
+      }, interval * (0.8 + Math.random() * 0.6))
     }
     scheduleIdle()
 
@@ -56,12 +67,14 @@ export function GlitchText({ text, as: Tag = 'span', className = '', autoOnMount
       window.clearTimeout(idle.current)
       window.clearTimeout(burst.current)
     }
-  }, [autoOnMount, interval, fire])
+  }, [mountDelay, mountBurstMs, interval, idleBurstMs, fire])
 
+  const ms = mode === 'hard' ? mountBurstMs : idleBurstMs
   return (
     <Tag
-      className={`glitch ${active ? 'is-glitching' : ''} ${className}`}
-      onPointerEnter={onHover ? fire : undefined}
+      className={`glitch ${mode !== 'off' ? 'is-glitching' : ''} ${mode === 'hard' ? 'is-hard' : ''} ${className}`}
+      style={mode !== 'off' ? ({ ['--gl-dur' as string]: `${ms}ms` } as React.CSSProperties) : undefined}
+      onPointerEnter={onHover ? () => fire(idleBurstMs, false) : undefined}
     >
       {text}
       <span className="glitch__layer glitch__layer--a" aria-hidden="true">
