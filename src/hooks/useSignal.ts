@@ -3,9 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 /** Opening phases of the hero, in order. */
 export type Phase = 'search' | 'detect' | 'impact' | 'settle' | 'stable'
 /** What the diagnostic block reports. */
-export type Signal = 'stable' | 'unstable' | 'lost' | 'recovering'
-/** How badly the archive is failing. */
-export type Severity = 'micro' | 'medium' | 'critical'
+export type Signal = 'stable' | 'lost' | 'recovering'
 
 export interface SignalState {
   phase: Phase
@@ -14,7 +12,7 @@ export interface SignalState {
   quick: boolean
 }
 
-/** Opening choreography, in ms from mount. UNCHANGED — the intro is approved. */
+/** Opening choreography, in ms from mount. */
 const T = {
   detect: 360,
   impact: 620,
@@ -24,89 +22,45 @@ const T = {
   quickStable: 700,
 }
 
-/* ---------------------------------------------------------------------------
-   POST-INTRO ERROR SYSTEM
-   One event catalogue, one scheduler. Every entry names a CSS state written to
-   the hero as `data-glitch`; the durations below are the exact lengths of the
-   matching CSS animations, so JS never has to animate anything itself.
-   ------------------------------------------------------------------------- */
-
-interface ErrorEvent {
-  /** Value written to `data-glitch`; the CSS contract. */
-  kind: string
-  severity: Severity
-  /** Length of the visual event, matching its CSS animation. */
-  ms: number
-}
-
-const EVENTS: readonly ErrorEvent[] = [
-  // Level 1 — tiny isolated malfunctions, one effect each.
-  { kind: 'micro-slice', severity: 'micro', ms: 120 },
-  { kind: 'micro-ghost', severity: 'micro', ms: 110 },
-  { kind: 'micro-scan', severity: 'micro', ms: 180 },
-  { kind: 'micro-glyph', severity: 'micro', ms: 140 },
-  { kind: 'micro-frame', severity: 'micro', ms: 130 },
-  // Level 2 — noticeable: the number and the photograph fail together.
-  { kind: 'medium-tear', severity: 'medium', ms: 460 },
-  { kind: 'medium-image', severity: 'medium', ms: 420 },
-  { kind: 'medium-corruption', severity: 'medium', ms: 360 },
-  // Level 3 — the signature failure of the archive.
-  { kind: 'critical-signal-loss', severity: 'critical', ms: 1100 },
-  { kind: 'critical-frame-corruption', severity: 'critical', ms: 820 },
-  { kind: 'critical-horizontal-tear', severity: 'critical', ms: 900 },
-]
-
-/** Reduced motion keeps the idea of an error, not its displacement. */
-const CALM_EVENTS: readonly ErrorEvent[] = [
-  { kind: 'calm-micro', severity: 'micro', ms: 260 },
-  { kind: 'calm-signal', severity: 'medium', ms: 520 },
-]
-
-/** Gaps between events. Wide ranges, so the beat is never readable. */
-const GAP = { min: 4200, max: 10000 }
-/** One in five waits noticeably longer: the archive looks settled again. */
-const LONG_PAUSE = { chance: 0.22, min: 2600, max: 6500 }
-/** Severity mix — stability dominates by design. */
-const MIX = { medium: 0.18, critical: 0.055 }
-/** Minimum spacing per level, so a big failure stays an event. */
-const SPACING = { medium: 9000, critical: 25000 }
-/** Recovery is slower than the failure: sharp break, controlled return. */
-const RECOVERY_MS = 540
-const CALM_GAP = { min: 14000, max: 26000 }
+/** Micro-errors: short, varied, never on a predictable beat. */
+const MICRO_TYPES = ['slip', 'ghost', 'tear'] as const
+const MICRO_MIN = 2800
+const MICRO_MAX = 6500
+/** The signature event. Rare enough to stay a surprise. */
+const COLLAPSE_MIN = 17000
+const COLLAPSE_MAX = 28000
+const COLLAPSE_MS = 230
+const RECOVER_MS = 560
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min)
-const pick = <X,>(list: readonly X[]) => list[Math.floor(Math.random() * list.length)]
 
 /**
- * "404 // SIGNAL INSTABILITY" — the hero's motion system.
+ * "404 // SIGNAL LOST" — the hero's motion system.
  *
  * Owns one state machine for the whole hero so the number, the environmental
  * image and the diagnostic text always fail together: the archive malfunctions,
  * rather than a title having a glitch effect bolted on.
  *
- *   INTRO -> IDLE_STABLE -> (micro | medium | critical) -> RECOVERING -> IDLE_STABLE
- *
- * The intro is untouched. After it completes, a single scheduler fires one
- * event at a time with randomised gaps, weighted heavily towards stability.
- * It writes `data-glitch`, `data-severity` and `data-recover` onto the hero
+ * The hook writes `data-phase` and a transient `data-glitch` onto the hero
  * element; every pixel of the effect itself is CSS (transform / opacity /
- * clip-path / filter), so it stays on the compositor and can never move layout.
+ * clip-path / filter), so it stays on the compositor.
  *
  * Scheduling pauses when the hero scrolls out of view or the tab is hidden,
- * events never stack, and every timer is cleared on unmount.
+ * and the whole system is inert under `prefers-reduced-motion`.
  */
 export function useSignal<T extends HTMLElement>() {
   const ref = useRef<T | null>(null)
   const [state, setState] = useState<SignalState>({ phase: 'search', signal: 'stable', quick: false })
-  /** Hover / tap on the number is a user-triggered micro-error, rate limited. */
-  const nudgeRef = useRef<() => void>(() => {})
-  const nudge = () => nudgeRef.current()
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setState({ phase: 'stable', signal: 'stable', quick: true })
+      return
+    }
+
     const timers = new Set<number>()
     const after = (ms: number, fn: () => void) => {
       const id = window.setTimeout(() => {
@@ -116,14 +70,12 @@ export function useSignal<T extends HTMLElement>() {
       timers.add(id)
       return id
     }
-    const setPhase = (phase: Phase) => setState((s) => ({ ...s, phase }))
-    const setSignal = (signal: Signal) => setState((s) => (s.signal === signal ? s : { ...s, signal }))
 
-    // ---- opening (approved, do not change) -------------------------------
-    const seen = sessionStorage.getItem('signal-seen') === '1' || reduced
-    if (reduced) {
-      setState({ phase: 'stable', signal: 'stable', quick: true })
-    } else if (seen) {
+    const setPhase = (phase: Phase) => setState((s) => ({ ...s, phase }))
+
+    // ---- opening ---------------------------------------------------------
+    const seen = sessionStorage.getItem('signal-seen') === '1'
+    if (seen) {
       setState((s) => ({ ...s, phase: 'settle', quick: true }))
       after(T.quickStable, () => setPhase('stable'))
     } else {
@@ -136,75 +88,51 @@ export function useSignal<T extends HTMLElement>() {
       })
     }
 
-    // ---- awake / asleep --------------------------------------------------
+    // ---- disturbances ----------------------------------------------------
+    let clearing: number | undefined
+    let lastEvent = 0
+    /** Events never stack: a disturbance is ignored if one just happened. */
+    const disturb = (kind: string, ms: number, force = false) => {
+      const now = performance.now()
+      if (!force && now - lastEvent < 900) return
+      lastEvent = now
+      el.dataset.glitch = kind
+      window.clearTimeout(clearing)
+      clearing = window.setTimeout(() => {
+        delete el.dataset.glitch
+      }, ms)
+    }
+
+    const collapse = () => {
+      disturb('collapse', COLLAPSE_MS, true)
+      setState((s) => ({ ...s, signal: 'lost' }))
+      after(COLLAPSE_MS, () => setState((s) => ({ ...s, signal: 'recovering' })))
+      after(COLLAPSE_MS + RECOVER_MS, () => setState((s) => ({ ...s, signal: 'stable' })))
+    }
+
     let visible = true
     const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting), { threshold: 0.12 })
     io.observe(el)
     const awake = () => visible && !document.hidden
 
-    // ---- one error event at a time ---------------------------------------
-    let busy = false
-    const lastOf: Record<Severity, number> = { micro: 0, medium: -Infinity, critical: -Infinity }
-
-    /** Runs one event: failure, then the slower recovery, then stable. */
-    const run = (ev: ErrorEvent) => {
-      if (busy) return
-      busy = true
-      lastOf[ev.severity] = performance.now()
-
-      el.dataset.severity = ev.severity
-      el.dataset.glitch = ev.kind
-
-      // Diagnostics follow the failure. Micro events stay silent on purpose:
-      // the status line has to mean something when it does change.
-      if (ev.severity === 'medium') {
-        setSignal('unstable')
-      } else if (ev.severity === 'critical') {
-        after(90, () => setSignal('unstable'))
-        after(Math.round(ev.ms * 0.45), () => setSignal('lost'))
-      }
-
-      after(ev.ms, () => {
-        delete el.dataset.glitch
-        if (ev.severity === 'micro') {
-          delete el.dataset.severity
-          busy = false
-          return
-        }
-        el.dataset.recover = '1'
-        setSignal('recovering')
-        after(RECOVERY_MS, () => {
-          delete el.dataset.recover
-          delete el.dataset.severity
-          setSignal('stable')
-          busy = false
-        })
-      })
+    let microId: number | undefined
+    const loopMicro = () => {
+      microId = window.setTimeout(() => {
+        if (awake()) disturb(MICRO_TYPES[Math.floor(Math.random() * MICRO_TYPES.length)], rand(70, 130))
+        loopMicro()
+      }, rand(MICRO_MIN, MICRO_MAX))
     }
-
-    /** Weighted severity, with a floor on how often the big ones may return. */
-    const nextEvent = (): ErrorEvent => {
-      const now = performance.now()
-      const roll = Math.random()
-      let severity: Severity = 'micro'
-      if (roll < MIX.critical && now - lastOf.critical > SPACING.critical) severity = 'critical'
-      else if (roll < MIX.medium && now - lastOf.medium > SPACING.medium) severity = 'medium'
-      const pool = reduced ? CALM_EVENTS : EVENTS
-      const matching = pool.filter((e) => e.severity === severity)
-      return pick(matching.length ? matching : pool.filter((e) => e.severity === 'micro'))
+    let collapseId: number | undefined
+    const loopCollapse = () => {
+      collapseId = window.setTimeout(() => {
+        if (awake()) collapse()
+        loopCollapse()
+      }, rand(COLLAPSE_MIN, COLLAPSE_MAX))
     }
-
-    // ---- scheduler: variable gaps, never an interval ---------------------
-    let nextId: number | undefined
-    const schedule = () => {
-      const base = reduced ? rand(CALM_GAP.min, CALM_GAP.max) : rand(GAP.min, GAP.max)
-      const pause = !reduced && Math.random() < LONG_PAUSE.chance ? rand(LONG_PAUSE.min, LONG_PAUSE.max) : 0
-      nextId = window.setTimeout(() => {
-        if (awake() && !busy) run(nextEvent())
-        schedule()
-      }, base + pause)
-    }
-    const startId = after(reduced ? 1200 : seen ? T.quickStable : T.stable, schedule)
+    const startLoops = after(seen ? T.quickStable : T.stable, () => {
+      loopMicro()
+      loopCollapse()
+    })
 
     // ---- scroll: lift the hero away, and tear once on the way out --------
     let ticking = false
@@ -221,7 +149,7 @@ export function useSignal<T extends HTMLElement>() {
       // Leaving the hero is itself a signal event, fired once per approach.
       if (v > 0.12 && v < 0.75 && !torn) {
         torn = true
-        if (!reduced && !busy) run(EVENTS.find((e) => e.kind === 'medium-tear')!)
+        disturb('tear', 120)
       } else if (v <= 0.04) {
         torn = false
       }
@@ -235,31 +163,28 @@ export function useSignal<T extends HTMLElement>() {
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll, { passive: true })
 
-    // Exposed to the component through the ref element, so hover/tap can fire
-    // exactly one micro event without re-rendering React on every pointer move.
-    let lastNudge = 0
-    const nudge = () => {
-      if (reduced || busy || el.dataset.phase !== 'stable') return
-      const now = performance.now()
-      if (now - lastNudge < 2600) return
-      lastNudge = now
-      run(pick(EVENTS.filter((e) => e.severity === 'micro')))
-    }
-    nudgeRef.current = nudge
-
     return () => {
       timers.forEach((id) => window.clearTimeout(id))
-      window.clearTimeout(startId)
-      window.clearTimeout(nextId)
+      window.clearTimeout(startLoops)
+      window.clearTimeout(microId)
+      window.clearTimeout(collapseId)
+      window.clearTimeout(clearing)
       io.disconnect()
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
-      nudgeRef.current = () => {}
-      delete el.dataset.glitch
-      delete el.dataset.severity
-      delete el.dataset.recover
     }
   }, [])
+
+  /** Hover on desktop is a user-triggered micro-error. */
+  const nudge = () => {
+    const el = ref.current
+    if (!el || el.dataset.phase !== 'stable') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    el.dataset.glitch = 'ghost'
+    window.setTimeout(() => {
+      if (ref.current?.dataset.glitch === 'ghost') delete ref.current.dataset.glitch
+    }, 110)
+  }
 
   return { ref, ...state, nudge }
 }
