@@ -229,72 +229,7 @@
   transition: opacity 0.6s var(--ease-soft), background 0.6s var(--ease-soft);
 }
 
-/* ------------------------------------------------------------------- hero */
-/* Staggered entrance. Each child declares its own delay through --d. */
-.hero-item {
-  opacity: 0;
-  animation: heroIn 0.95s var(--ease-cine) both;
-  animation-delay: var(--d, 0ms);
-}
-@keyframes heroIn {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 22px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-/* The 404 leads the sequence, just after the background starts uncovering. */
-.hero__404.hero-item {
-  animation-delay: 320ms;
-}
-
-/* The location card enters from the opposite side. */
-.hero-item--aside {
-  animation-name: heroInAside;
-}
-@keyframes heroInAside {
-  from {
-    opacity: 0;
-    transform: translate3d(-26px, 10px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* Background: slow uncover, then an almost imperceptible drift. */
-.hero__media {
-  animation: heroMediaIn 1.4s var(--ease-cine) both;
-}
-@keyframes heroMediaIn {
-  from {
-    opacity: 0;
-    clip-path: inset(12% 0 12% 0);
-  }
-  to {
-    opacity: 1;
-    clip-path: inset(0 0 0 0);
-  }
-}
-.hero__media > .glitch-img > img {
-  animation: heroDrift 26s var(--ease-soft) 1.2s infinite alternate;
-  will-change: transform;
-}
-@keyframes heroDrift {
-  from {
-    transform: scale(1) translate3d(0, 0, 0);
-  }
-  to {
-    transform: scale(1.04) translate3d(0, -0.8%, 0);
-  }
-}
-.hero__scroll {
-  animation: heroIn 1s var(--ease-cine) 1.5s both;
-}
+/* Hero motion lives in sequence.css (the "404 // SIGNAL LOST" system). */
 .hero__scroll::after {
   content: '';
   display: block;

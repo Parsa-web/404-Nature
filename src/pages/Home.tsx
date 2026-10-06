@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { GlitchImage } from '../components/GlitchImage'
-import { GlitchText } from '../components/GlitchText'
+import { Signal404 } from '../components/Signal404'
 import { Frame } from '../components/Frame'
 import { SectionTitle } from '../components/SectionTitle'
 import { ArrowIcon } from '../components/Icons'
@@ -9,8 +9,14 @@ import { TYPE_LABEL } from '../data/types'
 import { IMAGES, commons } from '../utils/images'
 import { useReveal } from '../hooks/useReveal'
 import { useParallax } from '../hooks/useParallax'
-import { useHeroSequence } from '../hooks/useHeroSequence'
+import { useSignal } from '../hooks/useSignal'
 import { useSeo } from '../hooks/useSeo'
+
+const SIGNAL_LABEL = {
+  stable: 'پایدار',
+  lost: 'قطع',
+  recovering: 'در حال بازیابی',
+} as const
 
 const CATEGORIES = [
   { label: 'تالاب‌ها', type: 'wetland' },
@@ -33,7 +39,7 @@ const HUMAN_ROWS = [
 export function Home() {
   useReveal()
   useParallax()
-  const heroRef = useHeroSequence<HTMLElement>()
+  const signal = useSignal<HTMLElement>()
   useSeo({
     title: '۴۰۴ — طبیعت پیدا نشد | آرشیو محیط زیست ایران',
     description:
@@ -46,9 +52,14 @@ export function Home() {
   return (
     <>
       {/* ---------------- HERO ---------------- */}
-      <section className="hero" aria-labelledby="hero-title" ref={heroRef}>
-        {/* The error event itself: noise, scanlines, a tear and one red artifact.
-            Pure overlay — removed from the compositor once the hero stabilises. */}
+      <section
+        className={`hero${signal.quick ? ' hero--quick' : ''}`}
+        aria-labelledby="hero-title"
+        data-phase={signal.phase}
+        ref={signal.ref}
+      >
+        {/* Signal failure layers. Black + grain sit behind the type so the 404
+            is read against a dead screen; the sweep passes over everything. */}
         <div className="hero__err hero__err--under" aria-hidden="true">
           <span className="hero__err-black" />
           <span className="hero__err-noise" />
@@ -61,64 +72,57 @@ export function Home() {
             alt="ساحل خشک و نمکی دریاچه ارومیه در غروب"
             credit="Solmaz Daryani — Wikimedia Commons (CC BY-SA)"
             eager
-            mountDelay={430}
-            mountBurstMs={240}
-            interval={12000}
-            idleBurstMs={120}
+            interval={0}
           />
         </div>
 
         <div className="shell hero__inner">
           <div>
-            <p className="eyebrow hero-item" style={{ ['--d' as string]: '620ms' }}>
+            {/* Retrieval status, replaced by the eyebrow once the archive opens. */}
+            <p className="hero__probe" aria-hidden="true">
+              <span className="hero__probe-a">در حال جست‌وجوی آرشیو…</span>
+              <span className="hero__probe-b">سیگنال دریافت شد</span>
+            </p>
+            <p className="eyebrow hero-item" style={{ ['--d' as string]: '880ms' }}>
               آرشیو محیط زیست ایران
             </p>
             <h1 id="hero-title" style={{ marginTop: '1.2rem' }}>
-              <GlitchText
-                as="span"
-                text="۴۰۴"
-                className="hero__404"
-                mountDelay={430}
-                mountBurstMs={220}
-                onHover
-                interval={12000}
-                idleBurstMs={110}
-              />
-              <span className="hero__title hero-item" style={{ ['--d' as string]: '760ms' }}>
+              <Signal404 onPointerEnter={signal.nudge} />
+              <span className="hero__title hero-item" style={{ ['--d' as string]: '1020ms' }}>
                 طبیعت پیدا نشد
               </span>
             </h1>
-            <p className="hero__claim hero-item" style={{ ['--d' as string]: '980ms' }}>
+            <p className="hero__claim hero-item" style={{ ['--d' as string]: '1240ms' }}>
               چیزی که دنبالش هستید،
               <br />
               ممکن است دیگر وجود نداشته باشد.
             </p>
-            <div className="hero__cta hero-item" style={{ ['--d' as string]: '1160ms' }}>
+            <div className="hero__cta hero-item" style={{ ['--d' as string]: '1420ms' }}>
               <Link className="btn btn--accent" to="/lost-places" data-cursor="cta">
                 کاوش در طبیعت گمشده
                 <ArrowIcon className="btn__arrow" />
               </Link>
             </div>
-            {/* Diagnostic metadata — deliberately tiny and secondary. */}
-            <dl className="hero__diag hero-item" style={{ ['--d' as string]: '1320ms' }}>
+            {/* Diagnostic metadata — deliberately tiny, and alive. */}
+            <dl className="hero__diag hero-item" data-signal={signal.signal} style={{ ['--d' as string]: '1560ms' }}>
               <div>
-                <dt>خطا</dt>
-                <dd>۴۰۴</dd>
+                <dt>سیگنال</dt>
+                <dd aria-live="off">{SIGNAL_LABEL[signal.signal]}</dd>
               </div>
               <div>
-                <dt>آرشیو</dt>
-                <dd>طبیعت</dd>
+                <dt>موقعیت</dt>
+                <dd>ایران</dd>
               </div>
               <div>
-                <dt>وضعیت</dt>
-                <dd>پیدا نشد</dd>
+                <dt>داده</dt>
+                <dd>{signal.signal === 'stable' ? 'ناقص' : 'مخدوش'}</dd>
               </div>
             </dl>
           </div>
 
           <aside
             className="hero__card hero-item hero-item--aside"
-            style={{ ['--d' as string]: '1040ms' }}
+            style={{ ['--d' as string]: '1300ms' }}
             aria-label="نمونه‌ای از آرشیو"
           >
             <Frame file={IMAGES.anzaliB} alt="تالاب انزلی از روی قایق محلی" ratio="43" width={720} sizes="340px" />
@@ -148,10 +152,10 @@ export function Home() {
 
         <span className="hero__scroll latin">SCROLL</span>
 
-        {/* Scanlines, tear and the single red artifact sit above everything,
-            including the 404, so the type is seen through the failure. */}
+        {/* Sweep, tearing and the red artifact pass above the type. */}
         <div className="hero__err hero__err--over" aria-hidden="true">
           <span className="hero__err-scan" />
+          <span className="hero__err-sweep" />
           <span className="hero__err-tear" />
           <span className="hero__err-red" />
         </div>
