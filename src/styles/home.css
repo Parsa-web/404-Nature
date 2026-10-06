@@ -67,7 +67,7 @@
 .hero__card .frame {
   margin-bottom: 1rem;
 }
-.hero__card h3 {
+.hero__card-name {
   font-size: var(--step-1);
 }
 .hero__card dl {
@@ -218,10 +218,11 @@
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
-  margin-top: 1.5rem;
+  margin-top: 1.3rem;
   font-size: var(--step--1);
   border-bottom: 1px solid var(--line-strong);
-  padding-bottom: 0.4rem;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
   transition: border-color 0.4s var(--ease), gap 0.4s var(--ease);
 }
 .loss:hover .loss__go {

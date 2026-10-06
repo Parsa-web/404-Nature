@@ -61,8 +61,15 @@ export function DataPage() {
         </div>
       </div>
 
-      <section className="section section--flush" style={{ paddingTop: 'clamp(2rem,5vw,3rem)' }}>
+      <section
+        className="section section--flush"
+        style={{ paddingTop: 'clamp(2rem,5vw,3rem)' }}
+        aria-labelledby="data-records"
+      >
         <div className="shell">
+          <h2 id="data-records" className="sr-only">
+            داده‌های مستند
+          </h2>
           <div className="data-grid">
             {list.map((p) => (
               <DataBlock key={p.id} point={p} />
@@ -85,7 +92,7 @@ export function DataPage() {
                 <div>
                   <h3>{t.title}</h3>
                   <p>{t.text}</p>
-                  <a href={t.sourceUrl} target="_blank" rel="noopener noreferrer">
+                  <a className="timeline__src" href={t.sourceUrl} target="_blank" rel="noopener noreferrer">
                     {t.source} ↗
                   </a>
                 </div>

@@ -13,7 +13,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4>آرشیو</h4>
+            <h2 className="footer__head">آرشیو</h2>
             <ul>
               {LOCATIONS.map((l) => (
                 <li key={l.slug}>
@@ -24,7 +24,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4>پروژه</h4>
+            <h2 className="footer__head">پروژه</h2>
             <ul>
               <li>
                 <Link to="/wildlife">زیستگاه‌ها و گونه‌ها</Link>

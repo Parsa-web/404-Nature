@@ -55,6 +55,8 @@
   color: var(--ink-dim);
   border-bottom: 1px solid var(--line-strong);
   width: fit-content;
+  /* Keeps the source link a comfortable target on touch screens. */
+  padding-block: 0.3rem 0.35rem;
 }
 .data-block__src a:hover {
   color: var(--ink);
@@ -109,7 +111,8 @@
 }
 .timeline__row a {
   display: inline-block;
-  margin-top: 0.7rem;
+  margin-top: 0.5rem;
+  padding-block: 0.3rem 0.35rem;
   font-size: var(--step--1);
   color: var(--ink-faint);
   border-bottom: 1px solid var(--line-strong);

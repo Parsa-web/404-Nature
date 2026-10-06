@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Frame } from '../components/Frame'
 import { SectionTitle } from '../components/SectionTitle'
@@ -22,10 +22,24 @@ export function Wildlife() {
       'آرشیو گونه‌های جانوری ایران که با تغییر زیستگاه روبه‌رو هستند: یوزپلنگ آسیایی، پلنگ ایرانی، گوزن زرد ایرانی، فلامینگو و گورخر ایرانی.',
   })
 
+  /** The card that opened the panel, so focus can return to it on close. */
+  const trigger = useRef<HTMLButtonElement | null>(null)
+  const closeBtn = useRef<HTMLButtonElement | null>(null)
+
   const close = () => {
     params.delete('animal')
     setParams(params, { replace: true })
   }
+
+  // Move focus into the dialog when it opens, and back to the card when it closes.
+  useEffect(() => {
+    if (animal) {
+      closeBtn.current?.focus()
+    } else if (trigger.current) {
+      trigger.current.focus()
+      trigger.current = null
+    }
+  }, [animal])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && animal && close()
@@ -62,7 +76,10 @@ export function Wildlife() {
                 key={a.id}
                 className="wild-card reveal"
                 data-reveal-delay={i * 60}
-                onClick={() => setParams({ animal: a.id }, { replace: false })}
+                onClick={(e) => {
+                  trigger.current = e.currentTarget
+                  setParams({ animal: a.id }, { replace: false })
+                }}
                 aria-haspopup="dialog"
               >
                 <Frame file={a.image.file} alt={a.image.alt} credit={a.image.credit} ratio="43" sizes="(max-width:700px) 100vw, 30vw" />
@@ -100,7 +117,7 @@ export function Wildlife() {
                 <span style={{ fontSize: 'var(--step--1)', color: 'var(--ink-faint)', letterSpacing: '0.16em' }}>
                   پرونده گونه
                 </span>
-                <button type="button" className="icon-btn" onClick={close} aria-label="بستن">
+                <button type="button" className="icon-btn" ref={closeBtn} onClick={close} aria-label="بستن">
                   <CloseIcon />
                 </button>
               </div>

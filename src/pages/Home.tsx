@@ -127,7 +127,7 @@ export function Home() {
             aria-label="نمونه‌ای از آرشیو"
           >
             <Frame file={IMAGES.anzaliB} alt="تالاب انزلی از روی قایق محلی" ratio="43" width={720} sizes="340px" />
-            <h3>{anzali.name}</h3>
+            <h2 className="hero__card-name">{anzali.name}</h2>
             <dl>
               <div>
                 <dt>وضعیت</dt>
@@ -184,6 +184,7 @@ export function Home() {
       <section className="section" aria-labelledby="losses-title">
         <div className="shell">
           <SectionTitle
+            id="losses-title"
             eyebrow="پرونده‌ها"
             title="چه چیزهایی را از دست می‌دهیم؟"
             text="پنج پرونده از جاهایی که روزی عادی بودند. هر پرونده با منبع خودش ارجاع داده شده است."
@@ -191,7 +192,7 @@ export function Home() {
 
           <div className="losses">
             {LOCATIONS.map((l, i) => (
-              <article className="loss reveal" key={l.slug} id={i === 0 ? 'losses-title' : undefined}>
+              <article className="loss reveal" key={l.slug}>
                 <div className="loss__media">
                   <Link to={`/lost-places/${l.slug}`} aria-label={l.name} data-cursor="image">
                     <Frame

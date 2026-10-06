@@ -280,14 +280,19 @@
   grid-template-columns: 1.4fr 1fr 1fr;
   gap: 2.5rem;
 }
-.footer__grid h4 {
+.footer__grid .footer__head {
   font-size: var(--step--1);
   color: var(--ink-faint);
   letter-spacing: 0.14em;
   margin-bottom: 1.1rem;
 }
 .footer__grid li + li {
-  margin-top: 0.55rem;
+  margin-top: 0.2rem;
+}
+/* Comfortable tap target without changing the visual rhythm. */
+.footer__grid li a {
+  display: inline-block;
+  padding-block: 0.35rem;
 }
 .footer__grid a {
   color: var(--ink-dim);
