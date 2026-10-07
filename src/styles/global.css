@@ -390,43 +390,6 @@ button {
   100% { transform: translate(0, 0); }
 }
 
-.glitch-img {
-  position: relative;
-  overflow: hidden;
-}
-.glitch-img__slice {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  opacity: 0;
-  pointer-events: none;
-}
-.glitch-img.is-glitching .glitch-img__slice--a {
-  opacity: 0.75;
-  clip-path: inset(18% 0 62% 0);
-  transform: translateX(-2.2%);
-  filter: saturate(0.4) contrast(1.3);
-  animation: sliceA 0.45s steps(3, end) 2;
-}
-.glitch-img.is-glitching .glitch-img__slice--b {
-  opacity: 0.6;
-  clip-path: inset(68% 0 14% 0);
-  transform: translateX(2.6%);
-  filter: hue-rotate(-18deg) contrast(1.2);
-  animation: sliceB 0.45s steps(3, end) 2;
-}
-@keyframes sliceA {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(-3.5%); }
-  100% { transform: translateX(0); }
-}
-@keyframes sliceB {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(3.5%); }
-  100% { transform: translateX(0); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

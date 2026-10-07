@@ -1,0 +1,582 @@
+/* ============================================================================
+   404 // UNSTABLE ARCHIVE
+   The hero's motion system. One vocabulary, driven entirely by the data
+   attributes that useHeroArchive writes onto `.hero`:
+
+     data-state  machine state        data-tear   1 horizontal displacement
+     data-beat   dramatic beat        data-frag   2 wrong image fragments
+     data-event  running event id     data-glyph  3 404 fragmentation
+     data-quick  shortened replay     data-scan   4 scanlines / ghost frame
+     data-reduced  reduced motion     data-rgb    5 chroma separation (capped)
+                                      data-grain  6 noise
+
+   The numbers on the right are the effect priority: tearing carries the
+   failure, noise only seasons it. Levels become registered custom properties,
+   so moving between them tweens one shared displacement unit instead of
+   firing a keyframe per combination. Only transform / opacity / clip-path /
+   filter are ever animated.
+   ========================================================================== */
+
+@property --t { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --f { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --g { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --s { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --cr { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --nz { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --j { syntax: '<number>'; inherits: true; initial-value: 0; }
+
+.hero {
+  /* One displacement unit. Everything scales from it, at every width. */
+  --u: clamp(5px, 1.8vw, 24px);
+  --t: 0;
+  --f: 0;
+  --g: 0;
+  --s: 0;
+  --cr: 0;
+  --nz: 0;
+  --j: 0;
+  transition-property: --t, --f, --g, --s, --cr, --nz;
+  transition-duration: 420ms;
+  transition-timing-function: var(--ease-cine);
+}
+
+.hero[data-tear='1'] { --t: 1; }
+.hero[data-tear='2'] { --t: 2; }
+.hero[data-tear='3'] { --t: 3; }
+.hero[data-frag='1'] { --f: 1; }
+.hero[data-frag='2'] { --f: 2; }
+.hero[data-frag='3'] { --f: 3; }
+.hero[data-glyph='1'] { --g: 1; }
+.hero[data-glyph='2'] { --g: 2; }
+.hero[data-glyph='3'] { --g: 3; }
+.hero[data-scan='1'] { --s: 1; }
+.hero[data-scan='2'] { --s: 2; }
+.hero[data-rgb='1'] { --cr: 1; }
+.hero[data-grain='1'] { --nz: 1; }
+.hero[data-grain='2'] { --nz: 2; }
+
+/* Pacing per beat: anticipation drifts in, failure snaps, recovery is slow.
+   This is what stops the system reading as "a glitch every few seconds". */
+.hero[data-beat='anticipate'] { transition-duration: 900ms; }
+.hero[data-beat='detect'] { transition-duration: 520ms; }
+.hero[data-beat='escalate'] { transition-duration: 380ms; }
+.hero[data-beat='fail'] { transition-duration: 90ms; transition-timing-function: steps(2, end); }
+.hero[data-beat='hold'] { transition-duration: 220ms; }
+.hero[data-beat='recover'] { transition-duration: 1150ms; transition-timing-function: var(--ease-soft); }
+
+/* A sustained beat is not a frozen frame: the archive keeps straining. */
+@keyframes haStrain {
+  0% { --j: 0; }
+  28% { --j: 0.34; }
+  52% { --j: -0.2; }
+  76% { --j: 0.12; }
+  100% { --j: 0; }
+}
+.hero[data-beat='escalate'],
+.hero[data-beat='fail'],
+.hero[data-beat='hold'] {
+  animation: haStrain 1.3s steps(4, end) infinite;
+}
+.hero[data-beat='fail'] { animation-duration: 0.62s; }
+
+/* ------------------------------------------------------- the environment */
+
+.ha-img {
+  position: absolute;
+  /* Horizontal bleed: the whole record can slide during a tear without ever
+     exposing an empty strip at the edge of the frame. */
+  inset: 0 -4%;
+  overflow: hidden;
+  transform: translate3d(calc((var(--t) + var(--j)) * -0.22 * var(--u)), 0, 0);
+}
+.ha-img__base {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  transform: scale(1.07);
+  transition: opacity 1600ms linear, transform 3200ms var(--ease-cine);
+}
+.ha-img[data-loaded='true'] .ha-img__base {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Three bands cut from the same frame. Displacing them is the primary
+   failure language: corrupted scan data, not a shake. */
+.ha-img__band,
+.ha-img__break,
+.ha-img__chroma,
+.ha-img__ghost {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.ha-img__band {
+  opacity: calc(var(--t) * 0.4);
+  transition: opacity 240ms linear;
+}
+.ha-img__band--1 {
+  clip-path: inset(15% 0 73% 0);
+  transform: translate3d(calc((var(--t) + var(--j)) * -1.15 * var(--u)), 0, 0);
+}
+.ha-img__band--2 {
+  clip-path: inset(41% 0 45% 0);
+  transform: translate3d(calc((var(--t) - var(--j)) * 1.7 * var(--u)), 0, 0);
+}
+.ha-img__band--3 {
+  clip-path: inset(67% 0 19% 0);
+  transform: translate3d(calc((var(--t) + var(--j) * 0.5) * -0.65 * var(--u)), 0, 0);
+}
+
+/* One rectangular region that lets go of the frame — EVENT B. */
+.ha-img__break {
+  clip-path: inset(27% 51% 36% 17%);
+  transform: translate3d(calc(var(--t) * 1.1 * var(--u)), calc(var(--t) * -0.3 * var(--u)), 0);
+}
+.hero[data-tear='2'] .ha-img__break,
+.hero[data-tear='3'] .ha-img__break {
+  opacity: 0.95;
+}
+
+/* An earlier record still sitting in memory. */
+.ha-img__ghost {
+  opacity: calc(var(--s) * 0.055 + var(--f) * 0.05);
+  filter: grayscale(1) contrast(1.25);
+  mix-blend-mode: screen;
+  transform: translate3d(calc(var(--s) * 0.4 * var(--u)), 0, 0) scale(1.03);
+}
+
+/* Chromatic separation is an accent and nothing more: capped at one level,
+   clipped to two bands, never a permanent wash. */
+.ha-img__chroma {
+  opacity: calc(var(--cr) * 0.22);
+  mix-blend-mode: screen;
+}
+.ha-img__chroma--a {
+  clip-path: inset(33% 0 43% 0);
+  filter: grayscale(1) sepia(1) hue-rotate(-38deg) saturate(2.2);
+  transform: translate3d(calc(var(--cr) * 0.8 * var(--u)), 0, 0);
+}
+.ha-img__chroma--b {
+  clip-path: inset(57% 0 25% 0);
+  filter: grayscale(1) sepia(1) hue-rotate(150deg) saturate(1.8);
+  transform: translate3d(calc(var(--cr) * -0.8 * var(--u)), 0, 0);
+}
+
+/* --------------------------------------------------------- wrong records */
+/* Corrupted image data inside the composition: no border, no radius, no
+   shadow, no container. Percentage poses keep every piece inside the frame. */
+
+.ha-frag {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ha-frag__piece {
+  position: absolute;
+  display: block;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  filter: grayscale(0.4) contrast(1.12) brightness(0.82);
+  transform: translate3d(calc((var(--t) + var(--j)) * 0.4 * var(--u)), 0, 0);
+  transition: opacity 620ms var(--ease-soft);
+}
+/* Every pose keeps a margin wider than the largest displacement, so a piece
+   can drift but never reach the edge of the frame. */
+.ha-frag__piece[data-pose='1'] { inset-block-start: 15%; inset-inline-start: 10%; width: 26%; height: 23%; }
+.ha-frag__piece[data-pose='2'] { inset-block-start: 44%; inset-inline-start: 48%; width: 30%; height: 26%; }
+.ha-frag__piece[data-pose='3'] { inset-block-start: 63%; inset-inline-start: 16%; width: 22%; height: 21%; }
+.ha-frag__piece[data-pose='4'] { inset-block-start: 9%; inset-inline-start: 54%; width: 24%; height: 19%; }
+
+.hero[data-frag='1'] .ha-frag__piece--1 { opacity: 0.68; }
+.hero[data-frag='2'] .ha-frag__piece--1 { opacity: 0.8; }
+.hero[data-frag='2'] .ha-frag__piece--2 { opacity: 0.64; }
+.hero[data-frag='3'] .ha-frag__piece--1,
+.hero[data-frag='3'] .ha-frag__piece--2 { opacity: 0.84; }
+.hero[data-frag='3'] .ha-frag__piece--3 { opacity: 0.7; }
+
+/* While the system is failing, the intruding record is damaged too. */
+.hero[data-beat='fail'] .ha-frag__piece,
+.hero[data-beat='hold'] .ha-frag__piece {
+  clip-path: inset(0 0 22% 0);
+  transform: translate3d(calc((var(--t) + var(--j)) * 0.6 * var(--u)), 0, 0) scaleY(1.03);
+}
+
+/* ------------------------------------------------------- signal surfaces */
+
+.ha-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+.ha-fx > span {
+  position: absolute;
+  inset: 0;
+  display: block;
+  opacity: 0;
+}
+/* Darkness the record emerges from, and dips back into when it is lost. */
+.ha-fx__black {
+  background: #000;
+  transition: opacity 1200ms linear;
+}
+.hero[data-state='INTRO_INITIALIZING'] .ha-fx__black { opacity: 0.94; }
+.hero[data-state='INTRO_SEARCHING'] .ha-fx__black { opacity: 0.72; }
+.hero[data-state='INTRO_DETECTED'] .ha-fx__black { opacity: 0.34; }
+.hero[data-state='INTRO_CORRUPTED'] .ha-fx__black { opacity: 0.12; }
+.hero[data-beat='fail'] .ha-fx__black {
+  opacity: 0.26;
+  transition-duration: 110ms;
+}
+.hero[data-beat='hold'] .ha-fx__black { opacity: 0.2; }
+
+.ha-fx__grain {
+  opacity: calc(var(--nz) * 0.05);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+.hero[data-grain='1'] .ha-fx__grain,
+.hero[data-grain='2'] .ha-fx__grain {
+  animation: haGrain 0.9s steps(3, end) infinite;
+}
+@keyframes haGrain {
+  0% { background-position: 0 0; }
+  33% { background-position: -40px 30px; }
+  66% { background-position: 30px -20px; }
+  100% { background-position: 0 0; }
+}
+
+.ha-fx__scan {
+  opacity: calc(var(--s) * 0.1);
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0 1px, transparent 1px 4px);
+  transition: opacity 400ms linear;
+}
+.hero[data-scan='1'] .ha-fx__scan,
+.hero[data-scan='2'] .ha-fx__scan {
+  animation: haScanDrift 5.5s linear infinite;
+}
+@keyframes haScanDrift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 8px, 0); }
+}
+
+/* A single slow pass: the archive looking for the record. */
+.ha-fx__sweep {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(244, 242, 239, 0.05) 45%,
+    rgba(244, 242, 239, 0.12) 50%,
+    rgba(244, 242, 239, 0.05) 55%,
+    transparent 100%
+  );
+}
+.hero[data-state='INTRO_SEARCHING'] .ha-fx__sweep,
+.hero[data-state='INTRO_DETECTED'] .ha-fx__sweep,
+.hero[data-beat='detect'] .ha-fx__sweep {
+  animation: haSweep 1900ms var(--ease-soft) 1;
+}
+@keyframes haSweep {
+  0% { opacity: 0; transform: translate3d(0, -100%, 0); }
+  18% { opacity: 1; }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(0, 100%, 0); }
+}
+
+/* -------------------------------------------------------- the 404 itself */
+/* Layered so it can come apart without ever becoming unreadable. The base is
+   never hidden; the strips and columns carry the break. */
+
+.n404 {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  font-size: clamp(5rem, 26vw, 22rem);
+  line-height: 0.8;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+}
+/* The base sits above every broken copy, so however far the strips travel the
+   number itself is still solid and still says ۴۰۴. */
+.n404__base {
+  position: relative;
+  z-index: 2;
+  display: block;
+  transform: translate3d(calc((var(--g) + var(--j)) * 0.16 * var(--u)), 0, 0);
+}
+.n404__ghost,
+.n404__slice,
+.n404__col {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+}
+/* The strips tile the number exactly, so a displaced strip is a tear. */
+.n404__slice--1 { clip-path: inset(-12% 0 66% 0); }
+.n404__slice--2 { clip-path: inset(34% 0 32% 0); }
+.n404__slice--3 { clip-path: inset(68% 0 -12% 0); }
+/* One column per glyph: "۴۰۴" can read for an instant as "۴۰ ۴". */
+.n404__col--1 { clip-path: inset(-12% 0 -12% 66.8%); }
+.n404__col--2 { clip-path: inset(-12% 33.4% -12% 33.4%); }
+.n404__col--3 { clip-path: inset(-12% 66.8% -12% 0); }
+
+.n404__ghost {
+  opacity: calc(var(--g) * 0.13);
+  color: var(--ink-dim);
+  transform: translate3d(calc(var(--g) * -1.1 * var(--u)), calc(var(--g) * 0.12 * var(--u)), 0);
+}
+.n404__slice {
+  opacity: calc(var(--g) * 0.21);
+}
+.n404__slice--1 { transform: translate3d(calc((var(--g) + var(--j)) * -0.58 * var(--u)), 0, 0); }
+.n404__slice--2 { transform: translate3d(calc((var(--g) - var(--j)) * 0.86 * var(--u)), 0, 0); }
+.n404__slice--3 { transform: translate3d(calc((var(--g) + var(--j)) * -0.32 * var(--u)), 0, 0); }
+/* A single glyph slips only once the failure is real. */
+.hero[data-glyph='2'] .n404__col--2,
+.hero[data-glyph='3'] .n404__col--2 {
+  opacity: 0.42;
+  transform: translate3d(calc(var(--g) * 0.46 * var(--u)), calc(var(--g) * -0.1 * var(--u)), 0);
+}
+.hero[data-glyph='3'] .n404__col--1 {
+  opacity: 0.3;
+  transform: translate3d(calc(var(--g) * -0.36 * var(--u)), 0, 0);
+}
+/* At the worst moment one strip drops out — the number is still complete,
+   because the base underneath it never leaves. */
+.hero[data-beat='fail'][data-glyph='3'] .n404__slice--2 { opacity: 0; }
+
+.n404__scan {
+  position: absolute;
+  inset-inline: -6%;
+  top: 0;
+  height: 18%;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, rgba(5, 5, 5, 0.78) 50%, transparent);
+}
+.hero[data-state='INTRO_DETECTED'] .n404__scan,
+.hero[data-beat='detect'] .n404__scan {
+  animation: n404Scan 1500ms var(--ease-soft) 1;
+}
+@keyframes n404Scan {
+  0% { opacity: 0; transform: translate3d(0, -120%, 0); }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(0, 560%, 0); }
+}
+
+/* The number is discovered, not faded in. */
+.n404__base {
+  opacity: 1;
+  transition: opacity 500ms linear, clip-path 500ms var(--ease-cine);
+}
+.hero[data-state='INTRO_INITIALIZING'] .n404__base,
+.hero[data-state='INTRO_SEARCHING'] .n404__base {
+  opacity: 0;
+  clip-path: inset(0 0 100% 0);
+}
+.hero[data-state='INTRO_DETECTED'] .n404__base {
+  animation: n404Find 1500ms steps(6, end) 1;
+}
+@keyframes n404Find {
+  0% { clip-path: inset(0 0 100% 0); opacity: 0.2; }
+  20% { clip-path: inset(0 0 62% 0); opacity: 0.85; }
+  40% { clip-path: inset(34% 0 32% 0); opacity: 0.6; }
+  60% { clip-path: inset(0 0 24% 0); opacity: 0.95; }
+  80% { clip-path: inset(0 0 44% 0); opacity: 0.8; }
+  100% { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+
+/* ---------------------------------------------------------- diagnostics */
+/* One line at a time. Editorial marginalia, never a HUD. */
+
+.ha-diag {
+  /* In flow, with a reserved line box: the message can change at any moment
+     without moving the composition, and it can never reach the viewport edge. */
+  margin: 0 0 0.9rem;
+  min-height: 1.1em;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.ha-diag__line {
+  display: inline-block;
+  animation: haDiagIn 420ms steps(3, end) both;
+}
+.ha-diag[data-status='lost'] .ha-diag__line,
+.ha-diag[data-status='unstable'] .ha-diag__line {
+  color: var(--accent);
+}
+.ha-diag[data-status='recovering'] .ha-diag__line {
+  color: var(--ink-dim);
+}
+@keyframes haDiagIn {
+  0% { opacity: 0; }
+  40% { opacity: 0.45; }
+  70% { opacity: 0.85; }
+  100% { opacity: 1; }
+}
+
+.hero__diag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.6rem;
+  margin: clamp(1.6rem, 3.4vw, 2.4rem) 0 0;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+.hero__diag div {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  padding-block: 0.2rem;
+}
+.hero__diag dt::after { content: ':'; }
+.hero__diag dd {
+  margin: 0;
+  color: var(--ink-dim);
+  transition: color 300ms var(--ease-soft);
+}
+.hero__diag[data-signal='unstable'] dd { color: var(--ink); }
+.hero__diag[data-signal='lost'] dd,
+.hero__diag[data-signal='recovering'] dd { color: var(--accent); }
+
+/* -------------------------------------------- copy, and leaving the hero */
+/* Deliberately calm: the failure is the hero's job, not the typography's. */
+
+.hero-item { opacity: 0; }
+.hero .hero-item {
+  animation: haIn 760ms var(--ease-cine) both;
+  animation-delay: var(--d, 0ms);
+}
+.hero .hero-item--aside { animation-name: haInAside; }
+.hero[data-quick] .hero-item,
+.hero[data-reduced] .hero-item {
+  animation-duration: 520ms;
+  animation-delay: calc(var(--d, 0ms) * 0.26);
+}
+@keyframes haIn {
+  from { opacity: 0; transform: translate3d(0, 13px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes haInAside {
+  from { opacity: 0; transform: translate3d(-18px, 6px, 0); }
+  to { opacity: 1; transform: none; }
+}
+.hero__scroll { opacity: 0; }
+.hero .hero__scroll { animation: haIn 800ms var(--ease-cine) 9600ms both; }
+.hero[data-quick] .hero__scroll,
+.hero[data-reduced] .hero__scroll { animation-delay: 2400ms; }
+
+.hero__inner {
+  position: relative;
+  z-index: 2;
+  transform: translate3d(0, calc(var(--ho, 0) * -64px), 0);
+  opacity: calc(1 - var(--ho, 0) * 0.92);
+}
+.hero__media::after { opacity: calc(1 + var(--ho, 0) * 0.35); }
+
+/* --------------------------------------------------------------- mobile */
+
+@media (max-width: 980px) {
+  .hero {
+    --u: clamp(4px, 1.5vw, 12px);
+  }
+  /* Dedicated crop: the figures on the salt shore stay in frame. */
+  .ha-img__base { object-position: 58% 48%; }
+  .hero__inner { transform: translate3d(0, calc(var(--ho, 0) * -34px), 0); }
+  .hero__diag { gap: 0 1.1rem; font-size: 0.62rem; }
+  .ha-diag {
+    font-size: 0.6rem;
+    white-space: normal;
+  }
+  /* Fragments grow a little so they still read as another record. */
+  .ha-frag__piece[data-pose='1'] { inset-block-start: 13%; inset-inline-start: 9%; width: 38%; height: 19%; }
+  .ha-frag__piece[data-pose='2'] { inset-block-start: 38%; inset-inline-start: 44%; width: 42%; height: 21%; }
+  .ha-frag__piece[data-pose='3'] { inset-block-start: 58%; inset-inline-start: 11%; width: 35%; height: 17%; }
+  .ha-frag__piece[data-pose='4'] { inset-block-start: 8%; inset-inline-start: 48%; width: 37%; height: 16%; }
+}
+@media (max-width: 640px) {
+  .hero {
+    /* Half amplitude: no displaced copy can reach the viewport edge, so the
+       page can never gain horizontal scroll on a phone. */
+    --u: clamp(3px, 1.6vw, 8px);
+  }
+  .n404 { font-size: clamp(5.4rem, 36vw, 13rem); }
+  /* Chroma is an accent, not a mobile cost centre. */
+  .ha-img__chroma { display: none; }
+}
+
+/* ------------------------------------------------------- reduced motion */
+/* The archive is still unstable — it just says so quietly. The narrative,
+   the diagnostics and the 404 survive; displacement and flashing do not. */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    --u: 0px;
+    animation: none !important;
+    /* Overrides the global reduced-motion reset: a slow dim is still calmer
+       than an instant state flip, and keeps the failure narrative readable. */
+    transition-duration: 700ms !important;
+  }
+  .hero *,
+  .hero *::before,
+  .hero *::after {
+    animation: none !important;
+  }
+  .ha-fx__scan,
+  .ha-fx__sweep,
+  .ha-img__band,
+  .ha-img__break,
+  .ha-img__chroma,
+  .n404__slice,
+  .n404__col,
+  .n404__scan {
+    display: none !important;
+  }
+  .hero-item,
+  .hero__scroll,
+  .n404__base {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+  .hero__inner {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  .ha-img__base {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* What remains: the record dims and an older frame surfaces behind it. */
+  .ha-img,
+  .ha-frag__piece {
+    transition: opacity 700ms var(--ease-soft), filter 700ms var(--ease-soft);
+    transition-duration: 700ms !important;
+  }
+  .hero[data-beat='escalate'] .ha-img,
+  .hero[data-beat='fail'] .ha-img,
+  .hero[data-beat='hold'] .ha-img {
+    filter: saturate(0.7) brightness(0.86);
+  }
+  .ha-diag__line { animation: none !important; }
+}

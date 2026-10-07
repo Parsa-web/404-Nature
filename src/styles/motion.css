@@ -229,7 +229,7 @@
   transition: opacity 0.6s var(--ease-soft), background 0.6s var(--ease-soft);
 }
 
-/* Hero motion lives in sequence.css (the "404 // SIGNAL LOST" system). */
+/* Hero motion lives in hero.css (the "404 // UNSTABLE ARCHIVE" system). */
 .hero__scroll::after {
   content: '';
   display: block;
@@ -322,30 +322,6 @@
   0% { opacity: 0; transform: translate3d(0, -25%, 0); }
   30% { opacity: 0.85; }
   100% { opacity: 0; transform: translate3d(0, 25%, 0); }
-}
-
-/* Image tearing: narrower slices, smaller displacement. */
-.glitch-img.is-glitching .glitch-img__slice--a {
-  opacity: 0.55;
-  clip-path: inset(30% 0 60% 0);
-  filter: saturate(0.5) contrast(1.15);
-  animation: sliceA 0.6s steps(3, end) 1;
-}
-.glitch-img.is-glitching .glitch-img__slice--b {
-  opacity: 0.45;
-  clip-path: inset(70% 0 22% 0);
-  filter: hue-rotate(-10deg) contrast(1.1);
-  animation: sliceB 0.6s steps(3, end) 1;
-}
-@keyframes sliceA {
-  0% { transform: translateX(0); opacity: 0; }
-  35% { transform: translateX(-1.6%); opacity: 0.55; }
-  100% { transform: translateX(0); opacity: 0; }
-}
-@keyframes sliceB {
-  0% { transform: translateX(0); opacity: 0; }
-  40% { transform: translateX(1.8%); opacity: 0.45; }
-  100% { transform: translateX(0); opacity: 0; }
 }
 
 /* ------------------------------------------------------------------- navbar */
@@ -708,10 +684,6 @@
 @media (prefers-reduced-motion: reduce) {
   .page.is-entering,
   .page.is-leaving,
-  .hero-item,
-  .hero__media,
-  .hero__media > .glitch-img > img,
-  .hero__scroll,
   .nav,
   .boot__inner,
   .boot__bar::after,
@@ -721,9 +693,6 @@
   .search-page__results .result-row {
     animation: none !important;
   }
-  .hero-item,
-  .hero__media,
-  .hero__scroll,
   .nav {
     opacity: 1 !important;
     transform: none !important;
@@ -731,7 +700,6 @@
   }
   .hero__scroll::after,
   .glitch__layer,
-  .glitch-img__slice,
   .veil {
     display: none !important;
   }
@@ -745,5 +713,80 @@
   }
   [data-parallax] {
     transform: none !important;
+  }
+}
+
+/* ------------------------------------------------------------- CTA detail */
+.btn--accent .btn__arrow {
+  transition: transform 420ms var(--ease-cine);
+}
+.btn--accent:hover .btn__arrow,
+.btn--accent:focus-visible .btn__arrow {
+  transform: translate3d(-7px, 0, 0);
+}
+
+/* ------------------------------------------------- before / after polish */
+/* Dragging should feel physical: the handle grows and lights up while held. */
+.ba:active .ba__knob {
+  transform: translate(-50%, -50%) scale(1.14);
+  background: rgba(5, 5, 5, 0.92);
+  border-color: rgba(244, 242, 239, 0.65);
+}
+.ba:active .ba__handle {
+  opacity: 1;
+  box-shadow: 0 0 18px rgba(244, 242, 239, 0.3);
+}
+
+/* --------------------------------------------- archive entries: stagger */
+/* Image, text and arrow arrive in that order inside each row. */
+.archive-row .frame img,
+.loss .frame img {
+  transition-delay: 0ms;
+}
+.archive-row.is-in h2,
+.archive-row.is-in p {
+  animation: haIn 640ms var(--ease-cine) 120ms both;
+}
+.archive-row .loss__go,
+.loss .loss__go {
+  opacity: 0;
+  transition: opacity 500ms var(--ease-soft) 340ms;
+}
+.archive-row.is-in .loss__go,
+.loss.is-in .loss__go,
+.is-in .archive-row .loss__go,
+.is-in .loss .loss__go {
+  opacity: 1;
+}
+
+/* Touch devices get state on tap, not on hover. */
+@media (hover: none) {
+  .archive-row:active .frame img,
+  .loss:active .frame img {
+    transform: scale(1.02);
+  }
+  .btn:active,
+  .archive-strip__item:active {
+    opacity: 0.78;
+  }
+  /* Without hover there is nothing to reveal the labels, so they stay on. */
+  .ba__tag {
+    opacity: 1;
+    transform: none;
+  }
+  .ba__handle {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-row.is-in h2,
+  .archive-row.is-in p {
+    animation: none !important;
+  }
+  .archive-row .loss__go,
+  .loss .loss__go {
+    opacity: 1;
+    transition: none;
   }
 }
