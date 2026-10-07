@@ -54,6 +54,8 @@ export function Hero() {
           <span className="ha-fx__grain" />
           <span className="ha-fx__scan" />
           <span className="ha-fx__sweep" />
+          <span className="ha-fx__alert" />
+          <span className="ha-fx__rule" />
         </div>
       </div>
 

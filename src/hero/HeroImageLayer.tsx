@@ -12,8 +12,9 @@ interface Props {
  * The environmental record itself.
  *
  * One real photograph, plus layers that only exist so the photograph can come
- * apart: three horizontal bands cut from the same frame (tearing), one
- * rectangular region that can break out of alignment (frame break), a ghost of
+ * apart: five horizontal bands cut from the same frame (tearing), two
+ * rectangular regions that break out of alignment (frame break), two strips
+ * burnt through in the archive's error red, a ghost of
  * an earlier frame still sitting in memory, and a single restrained chroma
  * pair. All of them are copies of project imagery — nothing is invented, and
  * nothing looks like a UI element.
@@ -40,7 +41,12 @@ export function HeroImageLayer({ file, alt, credit }: Props) {
       <span className="ha-img__band ha-img__band--1" aria-hidden="true" style={band} />
       <span className="ha-img__band ha-img__band--2" aria-hidden="true" style={band} />
       <span className="ha-img__band ha-img__band--3" aria-hidden="true" style={band} />
-      <span className="ha-img__break" aria-hidden="true" style={band} />
+      <span className="ha-img__band ha-img__band--4" aria-hidden="true" style={band} />
+      <span className="ha-img__band ha-img__band--5" aria-hidden="true" style={band} />
+      <span className="ha-img__break ha-img__break--1" aria-hidden="true" style={band} />
+      <span className="ha-img__break ha-img__break--2" aria-hidden="true" style={band} />
+      <span className="ha-img__alert ha-img__alert--1" aria-hidden="true" style={band} />
+      <span className="ha-img__alert ha-img__alert--2" aria-hidden="true" style={band} />
       <span className="ha-img__chroma ha-img__chroma--a" aria-hidden="true" style={band} />
       <span className="ha-img__chroma ha-img__chroma--b" aria-hidden="true" style={band} />
       {credit ? <span className="frame__credit">{credit}</span> : null}

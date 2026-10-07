@@ -13,6 +13,7 @@ import {
   INTRO_MS,
   INTRO_QUICK_FRAMES,
   INTRO_QUICK_MS,
+  NO_REPEAT_WINDOW,
   NUDGE_COOLDOWN,
   type HeroEvent,
   type HeroState,
@@ -112,8 +113,8 @@ export function useHeroArchive(): HeroArchive {
 
     /* ---- the only writer of hero visual state -------------------------- */
     const ceiling: Layers = reduced
-      ? { tear: 1, frag: 1, glyph: 1, scan: 1, rgb: 0, grain: 1 }
-      : { tear: 3, frag: 3, glyph: 3, scan: 2, rgb: 1, grain: 2 }
+      ? { tear: 1, frag: 1, glyph: 1, scan: 1, rgb: 0, grain: 1, alert: 1 }
+      : { tear: 3, frag: 3, glyph: 3, scan: 2, rgb: 1, grain: 2, alert: 2 }
 
     const layers: Layers = { ...CALM_LAYERS }
 
@@ -124,6 +125,7 @@ export function useHeroArchive(): HeroArchive {
       el.dataset.scan = String(layers.scan)
       el.dataset.rgb = String(layers.rgb)
       el.dataset.grain = String(layers.grain)
+      el.dataset.alert = String(layers.alert)
     }
 
     const applyFrame = (f: Keyframe) => {
@@ -133,6 +135,7 @@ export function useHeroArchive(): HeroArchive {
       if (f.scan !== undefined) layers.scan = clampLevel(f.scan, ceiling.scan)
       if (f.rgb !== undefined) layers.rgb = clampLevel(f.rgb, ceiling.rgb) as 0 | 1
       if (f.grain !== undefined) layers.grain = clampLevel(f.grain, ceiling.grain)
+      if (f.alert !== undefined) layers.alert = clampLevel(f.alert, ceiling.alert) as 0 | 1 | 2
       writeLayers()
       if (f.beat) el.dataset.beat = f.beat
       if (f.state) {
@@ -179,7 +182,8 @@ export function useHeroArchive(): HeroArchive {
     const pool = reduced ? CALM_EVENTS : EVENTS
     const lastRun = new Map<string, number>()
     let lastNotable = -Infinity
-    let lastId = ''
+    /** Recent ids, newest first. Nothing in here may run again yet. */
+    const recent: string[] = []
     let busy = false
     let nextTick: number | undefined
 
@@ -195,25 +199,45 @@ export function useHeroArchive(): HeroArchive {
       }))
     }
 
-    const choose = (): HeroEvent | null => {
-      const now = performance.now()
-      const sinceNotable = now - lastNotable
-      const candidates = pool.filter((e) => {
-        if (e.id === lastId && pool.length > 1) return false
-        const last = lastRun.get(e.id)
-        if (last !== undefined && now - last < e.cooldown) return false
-        const notable = e.state !== 'MICRO_ANOMALY'
-        if (notable && sinceNotable < CALM_AFTER_NOTABLE) return false
-        return true
-      })
-      if (!candidates.length) return null
-      const total = candidates.reduce((sum, e) => sum + e.weight, 0)
+    /** Weighted pick from a list. */
+    const weighted = (list: readonly HeroEvent[]): HeroEvent => {
+      const total = list.reduce((sum, e) => sum + e.weight, 0)
       let roll = Math.random() * total
-      for (const e of candidates) {
+      for (const e of list) {
         roll -= e.weight
         if (roll <= 0) return e
       }
-      return candidates[candidates.length - 1]
+      return list[list.length - 1]
+    }
+
+    /* Events that may be brought forward rather than letting the hero sit
+       silent. The big failures are never relaxed, so they stay special. */
+    const RELAXABLE = new Set<HeroState>([
+      'MICRO_ANOMALY',
+      'FRAME_BREAK',
+      'WRONG_IMAGE',
+      'MEMORY_LEAK',
+    ])
+
+    const choose = (): HeroEvent | null => {
+      const now = performance.now()
+      const sinceNotable = now - lastNotable
+      const fresh = pool.filter((e) => !recent.includes(e.id))
+      const strict = fresh.filter((e) => {
+        const last = lastRun.get(e.id)
+        if (last !== undefined && now - last < e.cooldown) return false
+        if (e.state !== 'MICRO_ANOMALY' && sinceNotable < CALM_AFTER_NOTABLE) return false
+        return true
+      })
+      if (strict.length) return weighted(strict)
+      /* Nothing is due yet. Rather than leave a long dead gap, bring forward
+         the least recently seen of the everyday events. */
+      const relaxed = fresh.filter((e) => RELAXABLE.has(e.state))
+      if (relaxed.length) {
+        const oldest = Math.min(...relaxed.map((e) => lastRun.get(e.id) ?? -Infinity))
+        return weighted(relaxed.filter((e) => (lastRun.get(e.id) ?? -Infinity) === oldest))
+      }
+      return fresh.length ? weighted(fresh) : null
     }
 
     /** Runs one event timeline, its recovery tail, then hands back to IDLE. */
@@ -222,7 +246,9 @@ export function useHeroArchive(): HeroArchive {
       busy = true
       const now = performance.now()
       lastRun.set(ev.id, now)
-      lastId = ev.id
+      recent.unshift(ev.id)
+      /* Keep the window smaller than the pool, or nothing would ever qualify. */
+      while (recent.length > Math.min(NO_REPEAT_WINDOW, pool.length - 1)) recent.pop()
       if (ev.state !== 'MICRO_ANOMALY') lastNotable = now
 
       el.dataset.event = ev.id
@@ -330,6 +356,7 @@ export function useHeroArchive(): HeroArchive {
         'scan',
         'rgb',
         'grain',
+        'alert',
         'quick',
         'reduced',
       ]) {
