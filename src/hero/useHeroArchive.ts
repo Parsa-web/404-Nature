@@ -57,7 +57,8 @@ export interface HeroArchive {
    One state machine, one scheduler, one source of truth. JavaScript never
    animates a pixel: it walks a timeline and writes discrete states onto the
    hero element (data-state, data-beat, data-tear, data-frag, data-glyph,
-   data-scan, data-rgb, data-grain). CSS renders those states with transform,
+   data-scan, data-rgb, data-grain, data-roll, data-invert, data-block). CSS
+   renders those states with transform,
    opacity, clip-path and filter only, so the photograph, the 404 and the
    diagnostic line always fail and recover as one system.
 
@@ -113,8 +114,8 @@ export function useHeroArchive(): HeroArchive {
 
     /* ---- the only writer of hero visual state -------------------------- */
     const ceiling: Layers = reduced
-      ? { tear: 1, frag: 1, glyph: 1, scan: 1, rgb: 0, grain: 1, alert: 1 }
-      : { tear: 3, frag: 3, glyph: 3, scan: 2, rgb: 1, grain: 2, alert: 2 }
+      ? { tear: 1, frag: 1, glyph: 1, scan: 1, rgb: 0, grain: 1, alert: 1, roll: 0, invert: 1, block: 0 }
+      : { tear: 3, frag: 3, glyph: 3, scan: 2, rgb: 1, grain: 2, alert: 2, roll: 2, invert: 2, block: 2 }
 
     const layers: Layers = { ...CALM_LAYERS }
 
@@ -126,6 +127,9 @@ export function useHeroArchive(): HeroArchive {
       el.dataset.rgb = String(layers.rgb)
       el.dataset.grain = String(layers.grain)
       el.dataset.alert = String(layers.alert)
+      el.dataset.roll = String(layers.roll)
+      el.dataset.invert = String(layers.invert)
+      el.dataset.block = String(layers.block)
     }
 
     const applyFrame = (f: Keyframe) => {
@@ -136,6 +140,9 @@ export function useHeroArchive(): HeroArchive {
       if (f.rgb !== undefined) layers.rgb = clampLevel(f.rgb, ceiling.rgb) as 0 | 1
       if (f.grain !== undefined) layers.grain = clampLevel(f.grain, ceiling.grain)
       if (f.alert !== undefined) layers.alert = clampLevel(f.alert, ceiling.alert) as 0 | 1 | 2
+      if (f.roll !== undefined) layers.roll = clampLevel(f.roll, ceiling.roll) as 0 | 1 | 2
+      if (f.invert !== undefined) layers.invert = clampLevel(f.invert, ceiling.invert) as 0 | 1 | 2
+      if (f.block !== undefined) layers.block = clampLevel(f.block, ceiling.block) as 0 | 1 | 2
       writeLayers()
       if (f.beat) el.dataset.beat = f.beat
       if (f.state) {
@@ -217,6 +224,7 @@ export function useHeroArchive(): HeroArchive {
       'FRAME_BREAK',
       'WRONG_IMAGE',
       'MEMORY_LEAK',
+      'ARCHIVE_INTRUSION',
     ])
 
     const choose = (): HeroEvent | null => {
@@ -357,6 +365,9 @@ export function useHeroArchive(): HeroArchive {
         'rgb',
         'grain',
         'alert',
+        'roll',
+        'invert',
+        'block',
         'quick',
         'reduced',
       ]) {

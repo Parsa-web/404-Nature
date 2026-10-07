@@ -16,7 +16,8 @@ interface Props {
  * rectangular regions that break out of alignment (frame break), two strips
  * burnt through in the archive's error red, a ghost of
  * an earlier frame still sitting in memory, and a single restrained chroma
- * pair. All of them are copies of project imagery — nothing is invented, and
+ * pair, a rolling copy for vertical-hold loss, a negative plate and four
+ * compression tiles. All of them are copies of project imagery — nothing is invented, and
  * nothing looks like a UI element.
  */
 export function HeroImageLayer({ file, alt, credit }: Props) {
@@ -49,6 +50,15 @@ export function HeroImageLayer({ file, alt, credit }: Props) {
       <span className="ha-img__alert ha-img__alert--2" aria-hidden="true" style={band} />
       <span className="ha-img__chroma ha-img__chroma--a" aria-hidden="true" style={band} />
       <span className="ha-img__chroma ha-img__chroma--b" aria-hidden="true" style={band} />
+      {/* Vertical hold: two stacked copies that scroll as one. */}
+      <span className="ha-img__roll" aria-hidden="true" style={band} />
+      {/* Negative read-back of the plate. */}
+      <span className="ha-img__invert" aria-hidden="true" style={band} />
+      {/* Compression tiles that break out of the frame. */}
+      <span className="ha-img__block ha-img__block--1" aria-hidden="true" style={band} />
+      <span className="ha-img__block ha-img__block--2" aria-hidden="true" style={band} />
+      <span className="ha-img__block ha-img__block--3" aria-hidden="true" style={band} />
+      <span className="ha-img__block ha-img__block--4" aria-hidden="true" style={band} />
       {credit ? <span className="frame__credit">{credit}</span> : null}
     </div>
   )

@@ -56,6 +56,7 @@ export function Hero() {
           <span className="ha-fx__sweep" />
           <span className="ha-fx__alert" />
           <span className="ha-fx__rule" />
+          <span className="ha-fx__retrace" />
         </div>
       </div>
 

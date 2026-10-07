@@ -10,6 +10,9 @@
      data-reduced  reduced motion     data-rgb    5 chroma separation (capped)
                                       data-grain  6 noise
                                       data-alert  - the archive's error red
+                                      data-roll   - vertical hold loss
+                                      data-invert - negative read-back
+                                      data-block  - compression tiles
 
    The numbers on the right are the effect priority: tearing carries the
    failure, noise only seasons it. Amplitudes all scale from one unit (--u),
@@ -27,6 +30,9 @@
 @property --nz { syntax: '<number>'; inherits: true; initial-value: 0; }
 @property --al { syntax: '<number>'; inherits: true; initial-value: 0; }
 @property --j { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --rl { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --iv { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --bk { syntax: '<number>'; inherits: true; initial-value: 0; }
 
 .hero {
   /* One displacement unit. Everything scales from it, at every width. */
@@ -39,7 +45,10 @@
   --nz: 0;
   --al: 0;
   --j: 0;
-  transition-property: --t, --f, --g, --s, --cr, --nz, --al;
+  --rl: 0;
+  --iv: 0;
+  --bk: 0;
+  transition-property: --t, --f, --g, --s, --cr, --nz, --al, --rl, --iv, --bk;
   transition-duration: 420ms;
   transition-timing-function: var(--ease-cine);
 }
@@ -60,6 +69,12 @@
 .hero[data-grain='2'] { --nz: 2; }
 .hero[data-alert='1'] { --al: 1; }
 .hero[data-alert='2'] { --al: 2; }
+.hero[data-roll='1'] { --rl: 1; }
+.hero[data-roll='2'] { --rl: 2; }
+.hero[data-invert='1'] { --iv: 1; }
+.hero[data-invert='2'] { --iv: 2; }
+.hero[data-block='1'] { --bk: 1; }
+.hero[data-block='2'] { --bk: 2; }
 
 /* Pacing per beat: anticipation drifts in, failure snaps, recovery is slow.
    This is what stops the system reading as "a glitch every few seconds". */
@@ -199,6 +214,143 @@
   transform: translate3d(calc(var(--cr) * -1.3 * var(--u)), 0, 0);
 }
 
+/* ------------------------------------------------- vertical hold loss */
+/* The archive loses sync and the record scrolls through itself behind a
+   retrace bar. Two stacked copies of the same frame translated by exactly one
+   frame height, so the loop is seamless and only transform is animated. */
+
+.ha-img__roll {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 200%;
+  display: block;
+  background-size: 100% 50%;
+  background-repeat: repeat-y;
+  background-position: center top;
+  opacity: 0;
+  pointer-events: none;
+  filter: contrast(1.1) brightness(0.92);
+  transition: opacity 260ms linear;
+  will-change: transform;
+}
+.hero[data-roll='1'] .ha-img__roll {
+  opacity: 0.62;
+  animation: haRoll 2.4s linear infinite;
+}
+.hero[data-roll='2'] .ha-img__roll {
+  opacity: 0.9;
+  animation: haRoll 0.85s linear infinite;
+}
+@keyframes haRoll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, -50%, 0); }
+}
+
+/* The black bar between fields, with the fault colour bleeding along it. */
+.ha-fx__retrace {
+  opacity: calc(var(--rl) * 0.5);
+  background: linear-gradient(
+    to bottom,
+    transparent 0 44%,
+    rgba(0, 0, 0, 0.9) 45.5% 49%,
+    rgba(179, 38, 30, 0.45) 49% 50.6%,
+    rgba(0, 0, 0, 0.55) 50.6% 53%,
+    transparent 54% 100%
+  );
+  transition: opacity 260ms linear;
+}
+.hero[data-roll='1'] .ha-fx__retrace { animation: haRetrace 2.4s linear infinite; }
+.hero[data-roll='2'] .ha-fx__retrace { animation: haRetrace 0.85s linear infinite; }
+@keyframes haRetrace {
+  from { transform: translate3d(0, -100%, 0); }
+  to { transform: translate3d(0, 100%, 0); }
+}
+
+/* ---------------------------------------------------- negative read-back */
+/* The plate comes back with its polarity flipped. Kept dark on purpose: a
+   bright negative would make the number and the copy unreadable. */
+
+.ha-img__invert {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  pointer-events: none;
+  filter: invert(1) grayscale(1) contrast(1.2) brightness(0.52);
+  transition: opacity 160ms steps(2, end), clip-path 160ms steps(2, end);
+}
+.hero[data-invert='1'] .ha-img__invert {
+  opacity: 0.8;
+  clip-path: inset(16% 0 38% 0);
+}
+.hero[data-invert='2'] .ha-img__invert {
+  opacity: 0.94;
+  clip-path: inset(0 0 0 0);
+}
+/* Once the fault is flagged the negative is read back in red. */
+.hero[data-alert='2'] .ha-img__invert {
+  filter: invert(1) grayscale(1) sepia(1) hue-rotate(-30deg) saturate(3.4) contrast(1.25)
+    brightness(0.5);
+}
+
+/* ------------------------------------------------------ compression tiles */
+/* Decompression fails and whole macroblocks are written to the wrong address:
+   rectangles of the photograph, flattened and offset, never UI shapes. */
+
+.ha-img__block {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  pointer-events: none;
+  filter: grayscale(0.75) contrast(1.55) brightness(0.88);
+  transition: opacity 140ms steps(2, end);
+  will-change: transform, opacity;
+}
+.ha-img__block--1 {
+  clip-path: inset(17% 64% 66% 13%);
+  transform: translate3d(calc((var(--bk) + var(--j)) * 1.15 * var(--u)), calc(var(--bk) * -0.55 * var(--u)), 0);
+}
+.ha-img__block--2 {
+  clip-path: inset(36% 22% 48% 51%);
+  transform: translate3d(calc((var(--bk) - var(--j)) * -1.4 * var(--u)), calc(var(--bk) * 0.4 * var(--u)), 0);
+}
+.ha-img__block--3 {
+  clip-path: inset(58% 49% 24% 24%);
+  transform: translate3d(calc((var(--bk) + var(--j)) * 0.85 * var(--u)), calc(var(--bk) * 0.7 * var(--u)), 0);
+}
+.ha-img__block--4 {
+  clip-path: inset(70% 12% 11% 62%);
+  transform: translate3d(calc((var(--bk) - var(--j)) * -0.95 * var(--u)), calc(var(--bk) * -0.5 * var(--u)), 0);
+}
+.hero[data-block='1'] .ha-img__block--1,
+.hero[data-block='1'] .ha-img__block--3 { opacity: 0.85; }
+.hero[data-block='2'] .ha-img__block { opacity: 1; }
+/* At the worst level the tiles stop being picture and become flat data. */
+.hero[data-block='2'] .ha-img__block--2,
+.hero[data-block='2'] .ha-img__block--4 {
+  filter: grayscale(1) contrast(2.4) brightness(0.8) blur(3px);
+}
+.hero[data-block='2'] .ha-img__block {
+  animation: haBlockShear 0.5s steps(3, end) infinite;
+}
+@keyframes haBlockShear {
+  0% { opacity: 1; }
+  34% { opacity: 0.35; }
+  67% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+/* A flagged fault writes the error colour into the broken tiles. */
+.hero[data-alert='2'] .ha-img__block--1,
+.hero[data-alert='2'] .ha-img__block--3 {
+  box-shadow: inset 0 0 0 1px rgba(179, 38, 30, 0.55);
+}
+
 /* ------------------------------------------------------------ error red */
 /* The archive's own fault colour, taken straight from --accent. It is a
    signal, not decoration: it only ever appears while something is wrong, it
@@ -295,6 +447,8 @@
 .ha-frag__piece[data-pose='2'] { inset-block-start: 44%; inset-inline-start: 48%; width: 30%; height: 26%; }
 .ha-frag__piece[data-pose='3'] { inset-block-start: 63%; inset-inline-start: 16%; width: 22%; height: 21%; }
 .ha-frag__piece[data-pose='4'] { inset-block-start: 9%; inset-inline-start: 54%; width: 24%; height: 19%; }
+.ha-frag__piece[data-pose='5'] { inset-block-start: 31%; inset-inline-start: 27%; width: 25%; height: 24%; }
+.ha-frag__piece[data-pose='6'] { inset-block-start: 68%; inset-inline-start: 57%; width: 27%; height: 20%; }
 
 .hero[data-frag='1'] .ha-frag__piece--1 { opacity: 0.8; }
 .hero[data-frag='2'] .ha-frag__piece--1 { opacity: 0.92; }
@@ -327,10 +481,13 @@
   position: absolute;
   inset: 0;
   display: block;
-  opacity: 0;
 }
+/* Each surface owns its own opacity. The shared rule above deliberately does
+   not set one: `.ha-fx > span` outranks a single class, so a default here
+   would silently win over every layer below. */
 /* Darkness the record emerges from, and dips back into when it is lost. */
 .ha-fx__black {
+  opacity: 0;
   background: #000;
   transition: opacity 1200ms linear;
 }
@@ -376,6 +533,7 @@
 
 /* A single slow pass: the archive looking for the record. */
 .ha-fx__sweep {
+  opacity: 0;
   background: linear-gradient(
     to bottom,
     transparent 0%,
@@ -625,6 +783,8 @@
   .ha-frag__piece[data-pose='2'] { inset-block-start: 38%; inset-inline-start: 44%; width: 42%; height: 21%; }
   .ha-frag__piece[data-pose='3'] { inset-block-start: 58%; inset-inline-start: 11%; width: 35%; height: 17%; }
   .ha-frag__piece[data-pose='4'] { inset-block-start: 8%; inset-inline-start: 48%; width: 37%; height: 16%; }
+  .ha-frag__piece[data-pose='5'] { inset-block-start: 28%; inset-inline-start: 22%; width: 39%; height: 18%; }
+  .ha-frag__piece[data-pose='6'] { inset-block-start: 66%; inset-inline-start: 50%; width: 36%; height: 16%; }
 }
 @media (max-width: 640px) {
   .hero {
@@ -657,6 +817,9 @@
   .ha-fx__scan,
   .ha-fx__sweep,
   .ha-fx__rule,
+  .ha-fx__retrace,
+  .ha-img__roll,
+  .ha-img__block,
   .ha-img__alert,
   .ha-img__band,
   .ha-img__break,
@@ -696,5 +859,15 @@
   /* The fault colour survives: it is the quietest way to say "error". */
   .ha-fx__alert {
     opacity: calc(var(--al) * 0.22);
+  }
+  /* So does the negative read-back — it is tone, not movement — but it fades
+     rather than snapping, and never covers the whole frame. */
+  .ha-img__invert {
+    transition: opacity 700ms var(--ease-soft) !important;
+    clip-path: inset(22% 0 44% 0) !important;
+  }
+  .hero[data-invert='1'] .ha-img__invert,
+  .hero[data-invert='2'] .ha-img__invert {
+    opacity: 0.5;
   }
 }
