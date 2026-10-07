@@ -1070,3 +1070,456 @@
   }
 }
 
+
+/* ============================================================================
+   ARCHIVE FAILURE SEQUENCES
+   The long events from useSignal: detection -> instability -> corruption ->
+   failure -> hold -> recovery, plus the wrong records that bleed into the hero
+   while they run. Same vocabulary as the short events above (horizontal
+   tearing, clipped strips, scanlines, grain, restrained chroma), only slower
+   and staged so each step is readable.
+
+   Phases are sustained states, so they loop a short jitter instead of playing
+   a one-shot animation: a phase can be on screen for a second or more.
+   ========================================================================== */
+
+/* ------------------------------------------------- wrong archive records */
+/* Rectangular pieces of other photographs, clipped inside the photograph's
+   own layer: no border, no radius, no container. Corrupted data, not a card. */
+.hero__frag {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hero__frag-piece {
+  position: absolute;
+  display: block;
+  opacity: 0;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.42) contrast(1.1) brightness(0.92);
+  transition: opacity 380ms var(--ease-soft);
+  will-change: transform, opacity;
+}
+.hero__frag-piece::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.42) 0 1px, transparent 1px 3px);
+}
+.hero__frag-piece--1 {
+  inset-block-start: 24%;
+  inset-inline-start: 0;
+  width: 56%;
+  height: 14%;
+}
+.hero__frag-piece--2 {
+  inset-block-start: 52%;
+  inset-inline-end: 0;
+  width: 44%;
+  height: 11%;
+}
+.hero__frag-piece--3 {
+  inset-block-start: 66%;
+  inset-inline-start: 14%;
+  width: 68%;
+  height: 8%;
+}
+.hero[data-fragment='one'] .hero__frag-piece--1,
+.hero[data-fragment='two'] .hero__frag-piece--1,
+.hero[data-fragment='two'] .hero__frag-piece--2,
+.hero[data-fragment='all'] .hero__frag-piece {
+  opacity: 0.88;
+}
+/* While a wrong record is on screen it never sits still. */
+.hero[data-fragment] .hero__frag-piece--1 {
+  animation: fragSlip 1500ms steps(5, end) infinite;
+}
+.hero[data-fragment] .hero__frag-piece--2 {
+  animation: fragSlipB 1700ms steps(5, end) infinite;
+}
+.hero[data-fragment] .hero__frag-piece--3 {
+  animation: fragSlip 1300ms steps(4, end) infinite reverse;
+}
+@keyframes fragSlip {
+  0%, 30% { transform: translate3d(0, 0, 0); }
+  48% { transform: translate3d(-18px, 0, 0); }
+  66% { transform: translate3d(9px, -2px, 0); }
+  100% { transform: translate3d(-4px, 0, 0); }
+}
+@keyframes fragSlipB {
+  0%, 26% { transform: translate3d(0, 0, 0); }
+  44% { transform: translate3d(22px, 0, 0); }
+  70% { transform: translate3d(-11px, 2px, 0); }
+  100% { transform: translate3d(5px, 0, 0); }
+}
+/* Recovery clears the wrong records before anything else. */
+.hero[data-recover] .hero__frag-piece {
+  opacity: 0;
+  animation: none;
+}
+
+/* ------------------------------------------------------- phase: detection */
+/* Something is coming: one sweep, a little grain, a faint echo. Nothing moves
+   out of place yet. */
+.hero[data-glitch='seq-detect'] .hero__err-sweep {
+  animation: sweep 760ms linear 1;
+}
+.hero[data-glitch='seq-detect'] .hero__err-noise {
+  animation: noiseHold 760ms steps(3, end) 1;
+}
+.hero[data-glitch='seq-detect'] .n404__ghost {
+  animation: seqEcho 760ms steps(3, end) 1;
+}
+@keyframes seqEcho {
+  0% { opacity: 0; transform: none; }
+  40% { opacity: 0.26; transform: translate3d(6px, -1px, 0); }
+  100% { opacity: 0; transform: none; }
+}
+@keyframes noiseHold {
+  0%, 40% { opacity: 0.2; transform: translate3d(-5px, 2px, 0); }
+  70% { opacity: 0.14; transform: translate3d(4px, -3px, 0); }
+  100% { opacity: 0.08; transform: none; }
+}
+
+/* ----------------------------------------------------- phase: instability */
+/* The number comes apart into strips that will not settle, and the photograph
+   breathes with it. Still completely readable. */
+.hero[data-glitch='seq-unstable'] .n404__base,
+.hero[data-glitch='seq-corrupt'] .n404__base,
+.hero[data-glitch='seq-fail'] .n404__base,
+.hero[data-glitch='seq-hold'] .n404__base {
+  animation: none;
+  opacity: 0;
+}
+.hero[data-glitch='seq-unstable'] .n404__slice,
+.hero[data-glitch='seq-corrupt'] .n404__slice,
+.hero[data-glitch='seq-fail'] .n404__slice,
+.hero[data-glitch='seq-hold'] .n404__slice {
+  opacity: 1;
+}
+.hero[data-glitch='seq-unstable'] .n404__slice--1 {
+  animation: seqS1 1300ms steps(6, end) infinite;
+}
+.hero[data-glitch='seq-unstable'] .n404__slice--2 {
+  animation: seqS2 1300ms steps(6, end) 90ms infinite;
+}
+.hero[data-glitch='seq-unstable'] .n404__slice--3 {
+  animation: seqS3 1300ms steps(6, end) 180ms infinite;
+}
+.hero[data-glitch='seq-unstable'] .hero__media > .glitch-img {
+  animation: seqImg 1300ms steps(6, end) infinite;
+}
+.hero[data-glitch='seq-unstable'] .hero__err-noise {
+  animation: noiseHold 1300ms steps(4, end) infinite;
+}
+@keyframes seqS1 {
+  0%, 44% { transform: none; }
+  56% { transform: translate3d(-14px, 0, 0); }
+  72% { transform: translate3d(-5px, 0, 0); }
+  88% { transform: translate3d(-18px, 0, 0); }
+  100% { transform: none; }
+}
+@keyframes seqS2 {
+  0%, 38% { transform: none; }
+  52% { transform: translate3d(17px, 0, 0); }
+  70% { transform: translate3d(6px, 0, 0); }
+  86% { transform: translate3d(21px, 0, 0); }
+  100% { transform: none; }
+}
+@keyframes seqS3 {
+  0%, 50% { transform: none; }
+  64% { transform: translate3d(-11px, 0, 0); }
+  82% { transform: translate3d(8px, 0, 0); }
+  100% { transform: none; }
+}
+@keyframes seqImg {
+  0%, 46% { transform: none; filter: none; }
+  58% { transform: translate3d(-7px, 0, 0); filter: saturate(0.78) contrast(1.05); }
+  80% { transform: translate3d(5px, 0, 0); filter: saturate(0.85); }
+  100% { transform: none; filter: none; }
+}
+
+/* ------------------------------------------------------ phase: corruption */
+/* Tearing, scanlines and displaced image strips on top of the instability. */
+.hero[data-glitch='seq-corrupt'] .n404__slice--1 {
+  animation: seqHardA 820ms steps(5, end) infinite;
+}
+.hero[data-glitch='seq-corrupt'] .n404__slice--2 {
+  animation: seqHardB 820ms steps(5, end) 70ms infinite;
+}
+.hero[data-glitch='seq-corrupt'] .n404__slice--3 {
+  animation: seqHardA 820ms steps(5, end) 140ms infinite reverse;
+}
+.hero[data-glitch='seq-corrupt'] .n404__scan {
+  animation: n404Scan 820ms linear infinite;
+}
+.hero[data-glitch='seq-corrupt'] .hero__err-tear {
+  animation: errTear 820ms steps(4, end) infinite;
+}
+.hero[data-glitch='seq-corrupt'] .hero__err-noise {
+  animation: noiseHold 820ms steps(4, end) infinite;
+}
+.hero[data-glitch='seq-corrupt'] .hero__media > .glitch-img {
+  animation: seqImgHard 820ms steps(5, end) infinite;
+}
+.hero[data-glitch='seq-corrupt'] .glitch-img__slice--a {
+  opacity: 0.8;
+  clip-path: inset(28% 0 56% 0);
+  filter: saturate(0.4) contrast(1.2);
+  animation: seqImgSlice 820ms steps(4, end) infinite;
+}
+@keyframes seqHardA {
+  0%, 22% { transform: translate3d(-24px, 0, 0); }
+  46% { transform: translate3d(10px, 0, 0); }
+  68% { transform: translate3d(-31px, 0, 0); }
+  88% { transform: translate3d(-6px, 0, 0); }
+  100% { transform: translate3d(-15px, 0, 0); }
+}
+@keyframes seqHardB {
+  0%, 22% { transform: translate3d(28px, 0, 0); }
+  46% { transform: translate3d(-13px, 0, 0); }
+  68% { transform: translate3d(34px, 0, 0); }
+  88% { transform: translate3d(8px, 0, 0); }
+  100% { transform: translate3d(19px, 0, 0); }
+}
+@keyframes seqImgHard {
+  0%, 24% { transform: translate3d(-12px, 0, 0); filter: saturate(0.55) contrast(1.12); }
+  52% { transform: translate3d(14px, 0, 0); filter: saturate(0.45) contrast(1.16); }
+  78% { transform: translate3d(-6px, 0, 0); }
+  100% { transform: translate3d(8px, 0, 0); filter: saturate(0.6) contrast(1.1); }
+}
+@keyframes seqImgSlice {
+  0%, 30% { transform: translate3d(26px, 0, 0); }
+  58% { transform: translate3d(-20px, 0, 0); }
+  100% { transform: translate3d(12px, 0, 0); }
+}
+
+/* --------------------------------------------------------- phase: failure */
+/* The archive gives up: widest displacement, a short chromatic symptom, the
+   red artifact, the strongest grain. The number is still legible. */
+.hero[data-glitch='seq-fail'] .n404__slice--1 {
+  animation: seqFailA 700ms steps(4, end) infinite;
+}
+.hero[data-glitch='seq-fail'] .n404__slice--2 {
+  animation: seqFailB 700ms steps(4, end) 60ms infinite;
+}
+.hero[data-glitch='seq-fail'] .n404__slice--3 {
+  animation: seqFailA 700ms steps(4, end) 120ms infinite reverse;
+}
+.hero[data-glitch='seq-fail'] .n404__ghost {
+  animation: seqFailGhost 700ms steps(4, end) infinite;
+}
+.hero[data-glitch='seq-fail'] .n404__scan {
+  animation: n404Scan 700ms linear infinite;
+}
+.hero[data-glitch='seq-fail'] .hero__err-tear {
+  animation: errTear 700ms steps(4, end) infinite;
+}
+.hero[data-glitch='seq-fail'] .hero__err-red {
+  animation: errRed 700ms steps(2, end) infinite;
+}
+.hero[data-glitch='seq-fail'] .hero__err-noise {
+  animation: noiseBurst 700ms steps(5, end) infinite;
+}
+.hero[data-glitch='seq-fail'] .hero__media > .glitch-img {
+  animation: imgCrit 700ms steps(5, end) infinite;
+}
+.hero[data-glitch='seq-fail'] .glitch-img__slice--a {
+  animation: imgSliceA 700ms steps(4, end) infinite;
+}
+.hero[data-glitch='seq-fail'] .glitch-img__slice--b {
+  animation: imgSliceB 700ms steps(4, end) infinite;
+}
+@keyframes seqFailA {
+  0%, 26% { transform: translate3d(-42px, 0, 0); }
+  54% { transform: translate3d(18px, 0, 0); }
+  80% { transform: translate3d(-30px, 0, 0); }
+  100% { transform: translate3d(-12px, 0, 0); }
+}
+@keyframes seqFailB {
+  0%, 26% { transform: translate3d(46px, 0, 0); }
+  54% { transform: translate3d(-22px, 0, 0); }
+  80% { transform: translate3d(33px, 0, 0); }
+  100% { transform: translate3d(14px, 0, 0); }
+}
+@keyframes seqFailGhost {
+  0%, 30% { opacity: 0.6; text-shadow: 7px 0 rgba(179, 38, 30, 0.85), -7px 0 rgba(120, 198, 210, 0.55); }
+  60% { opacity: 0.32; text-shadow: -4px 0 rgba(179, 38, 30, 0.5), 4px 0 rgba(120, 198, 210, 0.3); }
+  100% { opacity: 0.5; text-shadow: 5px 0 rgba(179, 38, 30, 0.7), -5px 0 rgba(120, 198, 210, 0.4); }
+}
+
+/* ------------------------------------------------------------ phase: hold */
+/* Nothing animates. The failure simply stands there for half a second so the
+   viewer can see what broke — then recovery takes over. */
+.hero[data-glitch='seq-hold'] .n404__slice--1 {
+  animation: none;
+  transform: translate3d(-26px, 0, 0);
+}
+.hero[data-glitch='seq-hold'] .n404__slice--2 {
+  animation: none;
+  transform: translate3d(31px, 0, 0);
+}
+.hero[data-glitch='seq-hold'] .n404__slice--3 {
+  animation: none;
+  transform: translate3d(-14px, 0, 0);
+}
+.hero[data-glitch='seq-hold'] .n404__ghost {
+  animation: none;
+  opacity: 0.36;
+  transform: translate3d(8px, -2px, 0);
+}
+.hero[data-glitch='seq-hold'] .hero__media > .glitch-img {
+  animation: none;
+  transform: translate3d(-16px, 0, 0);
+  filter: saturate(0.4) contrast(1.18);
+}
+.hero[data-glitch='seq-hold'] .glitch-img__slice--a {
+  animation: none;
+  opacity: 0.85;
+  clip-path: inset(30% 0 54% 0);
+  transform: translate3d(24px, 0, 0);
+  filter: saturate(0.35) contrast(1.2);
+}
+.hero[data-glitch='seq-hold'] .hero__err-noise {
+  animation: noiseHold 520ms steps(3, end) 1;
+}
+
+/* ------------------------------------------------------ the broken frame */
+/* A rectangle of the photograph slips out of register on both axes, shows a
+   sliver of another record through it, and snaps back. */
+.hero[data-glitch='broken-frame'] .glitch-img__slice--a {
+  opacity: 1;
+  clip-path: inset(32% 20% 42% 24%);
+  filter: saturate(0.45) contrast(1.16);
+  animation: brokenFrame 900ms steps(4, end) infinite;
+}
+.hero[data-glitch='broken-frame'] .n404__slice--2 {
+  animation: seqS2 900ms steps(5, end) infinite;
+}
+.hero[data-glitch='broken-frame'] .n404__base {
+  animation: none;
+  opacity: 0;
+}
+.hero[data-glitch='broken-frame'] .n404__slice {
+  opacity: 1;
+}
+.hero[data-glitch='broken-frame'] .hero__err-noise {
+  animation: noiseHold 900ms steps(4, end) infinite;
+}
+@keyframes brokenFrame {
+  0%, 24% { transform: translate3d(28px, -9px, 0); }
+  50% { transform: translate3d(-18px, 6px, 0); }
+  76% { transform: translate3d(22px, -4px, 0); }
+  100% { transform: translate3d(-8px, 2px, 0); }
+}
+
+/* -------------------------------------------------------------- recovery */
+/* Longer than the short-event recovery above, because these failures are
+   longer: strips ease home, the frame cleans up, fragments are already gone. */
+.hero[data-phase][data-recover][data-severity='intrusion'] .n404__base,
+.hero[data-phase][data-recover][data-severity='critical'] .n404__base,
+.hero[data-phase][data-recover][data-severity='major'] .n404__base {
+  animation: recoverType 1100ms var(--ease-soft) both;
+}
+.hero[data-phase][data-recover][data-severity='intrusion'] .hero__media > .glitch-img,
+.hero[data-phase][data-recover][data-severity='critical'] .hero__media > .glitch-img,
+.hero[data-phase][data-recover][data-severity='major'] .hero__media > .glitch-img {
+  animation: recoverFrame 1100ms var(--ease-soft) both;
+}
+
+/* ---------------------------------------------------------------- mobile */
+@media (max-width: 640px) {
+  /* Smaller fragments, shorter travel — same choreography, same durations. */
+  .hero__frag-piece--1 {
+    width: 72%;
+    height: 11%;
+  }
+  .hero__frag-piece--2 {
+    width: 58%;
+    height: 9%;
+  }
+  .hero__frag-piece--3 {
+    width: 66%;
+    height: 7%;
+  }
+  .hero[data-fragment] .hero__frag-piece--1,
+  .hero[data-fragment] .hero__frag-piece--2,
+  .hero[data-fragment] .hero__frag-piece--3 {
+    animation-name: fragSlipMobile;
+  }
+  @keyframes fragSlipMobile {
+    0%, 30% { transform: translate3d(0, 0, 0); }
+    52% { transform: translate3d(-9px, 0, 0); }
+    76% { transform: translate3d(6px, -1px, 0); }
+    100% { transform: translate3d(-3px, 0, 0); }
+  }
+  .hero[data-glitch='seq-unstable'] .n404__slice--1,
+  .hero[data-glitch='seq-unstable'] .n404__slice--3,
+  .hero[data-glitch='seq-corrupt'] .n404__slice--1,
+  .hero[data-glitch='seq-corrupt'] .n404__slice--3,
+  .hero[data-glitch='seq-fail'] .n404__slice--1,
+  .hero[data-glitch='seq-fail'] .n404__slice--3 {
+    animation-name: seqMobileA;
+  }
+  .hero[data-glitch='seq-unstable'] .n404__slice--2,
+  .hero[data-glitch='seq-corrupt'] .n404__slice--2,
+  .hero[data-glitch='seq-fail'] .n404__slice--2 {
+    animation-name: seqMobileB;
+  }
+  @keyframes seqMobileA {
+    0%, 30% { transform: translate3d(-17px, 0, 0); }
+    58% { transform: translate3d(9px, 0, 0); }
+    100% { transform: translate3d(-7px, 0, 0); }
+  }
+  @keyframes seqMobileB {
+    0%, 30% { transform: translate3d(20px, 0, 0); }
+    58% { transform: translate3d(-11px, 0, 0); }
+    100% { transform: translate3d(8px, 0, 0); }
+  }
+  .hero[data-glitch='seq-hold'] .n404__slice--1 {
+    transform: translate3d(-15px, 0, 0);
+  }
+  .hero[data-glitch='seq-hold'] .n404__slice--2 {
+    transform: translate3d(18px, 0, 0);
+  }
+  .hero[data-glitch='seq-hold'] .n404__slice--3 {
+    transform: translate3d(-8px, 0, 0);
+  }
+  .hero[data-glitch='broken-frame'] .glitch-img__slice--a {
+    clip-path: inset(34% 12% 44% 16%);
+    animation-name: brokenFrameMobile;
+  }
+  @keyframes brokenFrameMobile {
+    0%, 24% { transform: translate3d(14px, -5px, 0); }
+    52% { transform: translate3d(-10px, 4px, 0); }
+    100% { transform: translate3d(6px, -2px, 0); }
+  }
+  /* Chroma stays an accent, not a mobile cost centre. */
+  .hero[data-glitch='seq-fail'] .glitch-img__slice--b {
+    display: none;
+  }
+}
+
+/* -------------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  /* The archive still reports a wrong record, it just does not move: one
+     fragment fades in, the diagnostic rows change, nothing is displaced. */
+  .hero__frag-piece {
+    animation: none !important;
+    transform: none !important;
+    filter: saturate(0.4) contrast(1.02) !important;
+  }
+  .hero[data-fragment] .hero__frag-piece--1 {
+    opacity: 0.4 !important;
+  }
+  .hero[data-fragment='two'] .hero__frag-piece--2,
+  .hero[data-fragment='all'] .hero__frag-piece--2,
+  .hero[data-fragment='all'] .hero__frag-piece--3 {
+    opacity: 0 !important;
+  }
+  .hero[data-recover] .hero__frag-piece {
+    opacity: 0 !important;
+  }
+}

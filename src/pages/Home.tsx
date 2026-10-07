@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { ArchiveFragments } from '../components/ArchiveFragments'
 import { GlitchImage } from '../components/GlitchImage'
 import { Signal404 } from '../components/Signal404'
 import { Frame } from '../components/Frame'
@@ -14,9 +15,18 @@ import { useSeo } from '../hooks/useSeo'
 
 const SIGNAL_LABEL = {
   stable: 'پایدار',
+  detected: 'سیگنال ناشناخته',
   unstable: 'ناپایدار',
   lost: 'قطع',
   recovering: 'در حال بازیابی',
+} as const
+
+/** The archive's own verdict on the record it is showing. */
+const RECORD_LABEL = {
+  incomplete: 'ناقص',
+  wrong: 'رکورد نادرست',
+  corrupt: 'مخدوش',
+  conflict: 'تداخل حافظه',
 } as const
 
 const CATEGORIES = [
@@ -75,6 +85,8 @@ export function Home() {
             eager
             interval={0}
           />
+          {/* Fragments of other records, shown only during an intrusion. */}
+          {signal.fragmentsReady ? <ArchiveFragments /> : null}
         </div>
 
         <div className="shell hero__inner">
@@ -105,7 +117,7 @@ export function Home() {
               </Link>
             </div>
             {/* Diagnostic metadata — deliberately tiny, and alive. */}
-            <dl className="hero__diag hero-item" data-signal={signal.signal} style={{ ['--d' as string]: '1560ms' }}>
+            <dl className="hero__diag hero-item" data-signal={signal.signal} data-record={signal.record} style={{ ['--d' as string]: '1560ms' }}>
               <div>
                 <dt>سیگنال</dt>
                 <dd aria-live="off">{SIGNAL_LABEL[signal.signal]}</dd>
@@ -116,7 +128,7 @@ export function Home() {
               </div>
               <div>
                 <dt>داده</dt>
-                <dd>{signal.signal === 'stable' ? 'ناقص' : 'مخدوش'}</dd>
+                <dd>{RECORD_LABEL[signal.record]}</dd>
               </div>
             </dl>
           </div>
