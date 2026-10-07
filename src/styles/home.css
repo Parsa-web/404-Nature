@@ -317,14 +317,7 @@
 }
 
 /* The hero media wrapper must fill the hero, not the intrinsic image box. */
-.hero__media > .glitch-img {
-  position: absolute;
-  inset: 0;
-}
-.hero__media > .glitch-img > img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.hero__media > .ha-img > img {
   object-position: center 55%;
 }
 .hero__media .frame__credit {

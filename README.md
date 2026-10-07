@@ -41,7 +41,8 @@ All photography comes from Wikimedia Commons under free licences, registered cen
 
 ```
 src/
-  components/   reusable UI (GlitchText, GlitchImage, BeforeAfterSlider, Frame, …)
+  components/   reusable UI (GlitchText, BeforeAfterSlider, Frame, …)
+  hero/         the "404 // UNSTABLE ARCHIVE" hero motion system
   pages/        one file per route
   layouts/      RootLayout (nav, mobile menu, search overlay, footer)
   data/         content layer: locations, wildlife, data points, sources

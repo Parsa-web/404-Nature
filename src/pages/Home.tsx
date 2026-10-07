@@ -1,33 +1,14 @@
 import { Link } from 'react-router-dom'
-import { ArchiveFragments } from '../components/ArchiveFragments'
-import { GlitchImage } from '../components/GlitchImage'
-import { Signal404 } from '../components/Signal404'
 import { Frame } from '../components/Frame'
 import { SectionTitle } from '../components/SectionTitle'
 import { ArrowIcon } from '../components/Icons'
-import { LOCATIONS, LOCATION_BY_SLUG } from '../data/locations'
+import { Hero } from '../hero/Hero'
+import { LOCATIONS } from '../data/locations'
 import { TYPE_LABEL } from '../data/types'
 import { IMAGES, commons } from '../utils/images'
 import { useReveal } from '../hooks/useReveal'
 import { useParallax } from '../hooks/useParallax'
-import { useSignal } from '../hooks/useSignal'
 import { useSeo } from '../hooks/useSeo'
-
-const SIGNAL_LABEL = {
-  stable: 'پایدار',
-  detected: 'سیگنال ناشناخته',
-  unstable: 'ناپایدار',
-  lost: 'قطع',
-  recovering: 'در حال بازیابی',
-} as const
-
-/** The archive's own verdict on the record it is showing. */
-const RECORD_LABEL = {
-  incomplete: 'ناقص',
-  wrong: 'رکورد نادرست',
-  corrupt: 'مخدوش',
-  conflict: 'تداخل حافظه',
-} as const
 
 const CATEGORIES = [
   { label: 'تالاب‌ها', type: 'wetland' },
@@ -50,7 +31,6 @@ const HUMAN_ROWS = [
 export function Home() {
   useReveal()
   useParallax()
-  const signal = useSignal<HTMLElement>()
   useSeo({
     title: '۴۰۴ — طبیعت پیدا نشد | آرشیو محیط زیست ایران',
     description:
@@ -58,121 +38,9 @@ export function Home() {
     image: commons(IMAGES.urmiaIss, 1200),
   })
 
-  const anzali = LOCATION_BY_SLUG['anazali-wetland']
-
   return (
     <>
-      {/* ---------------- HERO ---------------- */}
-      <section
-        className={`hero${signal.quick ? ' hero--quick' : ''}`}
-        aria-labelledby="hero-title"
-        data-phase={signal.phase}
-        ref={signal.ref}
-      >
-        {/* Signal failure layers. Black + grain sit behind the type so the 404
-            is read against a dead screen; the sweep passes over everything. */}
-        <div className="hero__err hero__err--under" aria-hidden="true">
-          <span className="hero__err-black" />
-          <span className="hero__err-noise" />
-        </div>
-
-        <div className="hero__media" data-parallax="26">
-          <GlitchImage
-            file={IMAGES.urmiaGround}
-            shiftFile={IMAGES.urmiaIss}
-            alt="ساحل خشک و نمکی دریاچه ارومیه در غروب"
-            credit="Solmaz Daryani — Wikimedia Commons (CC BY-SA)"
-            eager
-            interval={0}
-          />
-          {/* Fragments of other records, shown only during an intrusion. */}
-          {signal.fragmentsReady ? <ArchiveFragments /> : null}
-        </div>
-
-        <div className="shell hero__inner">
-          <div>
-            {/* Retrieval status, replaced by the eyebrow once the archive opens. */}
-            <p className="hero__probe" aria-hidden="true">
-              <span className="hero__probe-a">در حال جست‌وجوی آرشیو…</span>
-              <span className="hero__probe-b">سیگنال دریافت شد</span>
-            </p>
-            <p className="eyebrow hero-item" style={{ ['--d' as string]: '880ms' }}>
-              آرشیو محیط زیست ایران
-            </p>
-            <h1 id="hero-title" style={{ marginTop: '1.2rem' }}>
-              <Signal404 onPointerEnter={signal.nudge} />
-              <span className="hero__title hero-item" style={{ ['--d' as string]: '1020ms' }}>
-                طبیعت پیدا نشد
-              </span>
-            </h1>
-            <p className="hero__claim hero-item" style={{ ['--d' as string]: '1240ms' }}>
-              چیزی که دنبالش هستید،
-              <br />
-              ممکن است دیگر وجود نداشته باشد.
-            </p>
-            <div className="hero__cta hero-item" style={{ ['--d' as string]: '1420ms' }}>
-              <Link className="btn btn--accent" to="/lost-places" data-cursor="cta">
-                کاوش در طبیعت گمشده
-                <ArrowIcon className="btn__arrow" />
-              </Link>
-            </div>
-            {/* Diagnostic metadata — deliberately tiny, and alive. */}
-            <dl className="hero__diag hero-item" data-signal={signal.signal} data-record={signal.record} style={{ ['--d' as string]: '1560ms' }}>
-              <div>
-                <dt>سیگنال</dt>
-                <dd aria-live="off">{SIGNAL_LABEL[signal.signal]}</dd>
-              </div>
-              <div>
-                <dt>موقعیت</dt>
-                <dd>ایران</dd>
-              </div>
-              <div>
-                <dt>داده</dt>
-                <dd>{RECORD_LABEL[signal.record]}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <aside
-            className="hero__card hero-item hero-item--aside"
-            style={{ ['--d' as string]: '1300ms' }}
-            aria-label="نمونه‌ای از آرشیو"
-          >
-            <Frame file={IMAGES.anzaliB} alt="تالاب انزلی از روی قایق محلی" ratio="43" width={720} sizes="340px" />
-            <h2 className="hero__card-name">{anzali.name}</h2>
-            <dl>
-              <div>
-                <dt>وضعیت</dt>
-                <dd className="status-dot" data-tone={anzali.statusTone}>
-                  {anzali.status}
-                </dd>
-              </div>
-              <div>
-                <dt>استان</dt>
-                <dd>{anzali.province}</dd>
-              </div>
-              <div>
-                <dt>هشدار بین‌المللی</dt>
-                <dd>فهرست مونترو، ۱۹۹۳</dd>
-              </div>
-            </dl>
-            <Link className="loss__go" to={`/lost-places/${anzali.slug}`} style={{ marginTop: '1.1rem' }}>
-              پرونده کامل
-              <ArrowIcon />
-            </Link>
-          </aside>
-        </div>
-
-        <span className="hero__scroll latin">SCROLL</span>
-
-        {/* Sweep, tearing and the red artifact pass above the type. */}
-        <div className="hero__err hero__err--over" aria-hidden="true">
-          <span className="hero__err-scan" />
-          <span className="hero__err-sweep" />
-          <span className="hero__err-tear" />
-          <span className="hero__err-red" />
-        </div>
-      </section>
+      <Hero />
 
       {/* ---------------- ARCHIVE CATEGORIES ---------------- */}
       <section aria-label="دسته‌های آرشیو">
