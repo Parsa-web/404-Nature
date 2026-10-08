@@ -4,7 +4,7 @@ import { Frame } from '../components/Frame'
 import { ArrowIcon } from '../components/Icons'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { LOCATIONS } from '../data/locations'
-import { TYPE_LABEL, type EcosystemType } from '../data/types'
+import { ARCHIVE_STATUS, TYPE_LABEL, type EcosystemType } from '../data/types'
 import { useReveal } from '../hooks/useReveal'
 import { useParallax } from '../hooks/useParallax'
 import { useSeo } from '../hooks/useSeo'
@@ -33,7 +33,7 @@ export function LostPlaces() {
   useSeo({
     title: 'مکان‌های از دست‌رفته | ۴۰۴ — طبیعت پیدا نشد',
     description:
-      'آرشیو مکان‌هایی در ایران که تغییر کرده‌اند: دریاچه ارومیه، تالاب انزلی، زاینده‌رود، جنگل‌های هیرکانی و تالاب هامون.',
+      'پرونده‌های مستند تغییر محیط زیست ایران: دریاچه ارومیه، تالاب هامون، دریاچه بختگان، تالاب انزلی، زاینده‌رود و جنگل‌های هیرکانی.',
   })
 
   const setFilter = (id: string) => {
@@ -48,9 +48,9 @@ export function LostPlaces() {
           <Breadcrumbs items={[{ label: 'خانه', to: '/' }, { label: 'مکان‌های از دست‌رفته' }]} />
           <h1>مکان‌های از دست‌رفته</h1>
           <p className="lede">
-            جاهایی که تغییر کرده‌اند؛
+            هر پرونده یک حکم دارد: از دست‌رفته، در حال فروپاشی، در خطر یا در حال بازیابی.
             <br />
-            بعضی هنوز قابل بازگشت‌اند، بعضی شاید نه.
+            حکم‌ها را سند صادر می‌کند، نه لحن.
           </p>
         </div>
       </header>
@@ -91,7 +91,9 @@ export function LostPlaces() {
                     <h2>
                       <Link to={`/lost-places/${l.slug}`}>{l.name}</Link>
                     </h2>
-                    <span className="archive-row__type">{TYPE_LABEL[l.type]}</span>
+                    <span className="archive-row__type">
+                      {TYPE_LABEL[l.type]} · {ARCHIVE_STATUS[l.archiveStatus].code}
+                    </span>
                   </div>
                   <div className="archive-row__meta">
                     <span>{l.province}</span>
@@ -115,8 +117,9 @@ export function LostPlaces() {
         <div className="shell">
           <div className="note reveal">
             <b>درباره دقت داده‌ها</b>
-            در این آرشیو هیچ عدد، تاریخ یا درصدی بدون منبع منتشر نمی‌شود. هر پرونده بخش «منابع» خود را دارد و فهرست کامل
-            در صفحه{' '}
+            هر پرونده به هفت پرسش یکسان پاسخ می‌دهد — اینجا چه بود، چه تغییر کرد، چرا، چه از دست رفت، چه کسی آسیب دید،
+            چه مانده و آیا برمی‌گردد — تا دو پرونده را بتوان خط به خط با هم مقایسه کرد. هیچ عدد، تاریخ یا درصدی بدون
+            منبع منتشر نمی‌شود و فهرست کامل منابع در صفحه{' '}
             <Link to="/sources" style={{ borderBottom: '1px solid var(--accent)' }}>
               منابع
             </Link>{' '}

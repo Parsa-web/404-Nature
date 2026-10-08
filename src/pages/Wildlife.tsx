@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Frame } from '../components/Frame'
 import { SectionTitle } from '../components/SectionTitle'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { CloseIcon } from '../components/Icons'
 import { ANIMALS, ANIMAL_BY_ID } from '../data/wildlife'
+import { LOCATION_BY_SLUG } from '../data/locations'
+import { ArrowIcon } from '../components/Icons'
 import { useReveal } from '../hooks/useReveal'
 import { useSeo } from '../hooks/useSeo'
 import { useBodyLock } from '../hooks/useBodyLock'
@@ -19,7 +21,7 @@ export function Wildlife() {
   useSeo({
     title: 'وقتی زیستگاه تغییر می‌کند | ۴۰۴ — طبیعت پیدا نشد',
     description:
-      'آرشیو گونه‌های جانوری ایران که با تغییر زیستگاه روبه‌رو هستند: یوزپلنگ آسیایی، پلنگ ایرانی، گوزن زرد ایرانی، فلامینگو و گورخر ایرانی.',
+      'گونه‌ها به‌عنوان شاهد تغییر اکوسیستم: فلامینگو، پلنگ ایرانی، گوزن زرد ایرانی، یوزپلنگ آسیایی و گورخر ایرانی.',
   })
 
   /** The card that opened the panel, so focus can return to it on close. */
@@ -53,10 +55,10 @@ export function Wildlife() {
       <header className="page-head">
         <div className="shell">
           <Breadcrumbs items={[{ label: 'خانه', to: '/' }, { label: 'زیستگاه‌ها' }]} />
-          <h1>وقتی زیستگاه تغییر می‌کند</h1>
+          <h1>گونه‌ها به‌عنوان شاهد</h1>
           <p className="lede">
-            یک گونه با تفنگ از بین نمی‌رود؛ با از دست رفتن زمینش از بین می‌رود. این بخش گونه‌هایی را مستند می‌کند که
-            سرنوشتشان به سرنوشت همان مکان‌های آرشیو گره خورده است.
+            این بخش دانشنامه جانوری نیست. هر گونه اینجا یک شاهد است: وضعیتش چیزی درباره وضعیت یک مکان در این آرشیو
+            می‌گوید که آمار مساحت و بارش نمی‌گوید.
           </p>
         </div>
       </header>
@@ -64,9 +66,9 @@ export function Wildlife() {
       <section className="section section--flush">
         <div className="shell">
           <SectionTitle
-            eyebrow="آرشیو گونه‌ها"
-            title="پنج گونه، پنج زیستگاه"
-            text="وضعیت حفاظتی هر گونه بر پایه ارزیابی اتحادیه بین‌المللی حفاظت از طبیعت (IUCN) آورده شده است. برای جزئیات روی هر گونه کلیک کنید."
+            eyebrow="شواهد زنده"
+            title="پنج گونه، پنج نوع فشار"
+            text="برای هر گونه چهار چیز ثبت شده است: زیستگاه، فشار محیطی دقیقی که تحمل می‌کند، نقشش در اکوسیستم، و این‌که افتش چه چیزی را ثابت می‌کند. وضعیت حفاظتی بر پایه ارزیابی اتحادیه بین‌المللی حفاظت از طبیعت (IUCN) است."
           />
 
           <div className="wild-grid">
@@ -92,12 +94,12 @@ export function Wildlife() {
                       <dd>{a.habitat}</dd>
                     </div>
                     <div>
-                      <dt>تهدید اصلی</dt>
-                      <dd>{a.mainThreat}</dd>
+                      <dt>فشار محیطی</dt>
+                      <dd>{a.pressure}</dd>
                     </div>
                     <div>
-                      <dt>اهمیت اکولوژیک</dt>
-                      <dd>{a.ecologicalRole}</dd>
+                      <dt>چه چیزی را ثابت می‌کند</dt>
+                      <dd>{a.evidence}</dd>
                     </div>
                   </dl>
                 </div>
@@ -136,11 +138,15 @@ export function Wildlife() {
                     <dd>{animal.habitat}</dd>
                   </div>
                   <div>
-                    <dt>تهدید اصلی</dt>
-                    <dd>{animal.mainThreat}</dd>
+                    <dt>فشار محیطی</dt>
+                    <dd>{animal.pressure}</dd>
                   </div>
                   <div>
-                    <dt>اهمیت اکولوژیک</dt>
+                    <dt>چه چیزی را ثابت می‌کند</dt>
+                    <dd>{animal.evidence}</dd>
+                  </div>
+                  <div>
+                    <dt>نقش در اکوسیستم</dt>
                     <dd>{animal.ecologicalRole}</dd>
                   </div>
                   <div>
@@ -148,6 +154,17 @@ export function Wildlife() {
                     <dd>{animal.conservation}</dd>
                   </div>
                 </dl>
+                {animal.linkedSlug && LOCATION_BY_SLUG[animal.linkedSlug] ? (
+                  <Link
+                    className="loss__go"
+                    to={`/lost-places/${animal.linkedSlug}`}
+                    onClick={close}
+                    style={{ marginTop: 0 }}
+                  >
+                    پرونده مرتبط: {LOCATION_BY_SLUG[animal.linkedSlug].name}
+                    <ArrowIcon />
+                  </Link>
+                ) : null}
                 <a
                   className="loss__go"
                   href={animal.sourceUrl}

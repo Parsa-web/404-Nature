@@ -258,7 +258,7 @@
 }
 .human__row {
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 15ch) minmax(0, 1fr);
+  grid-template-columns: 4.5rem minmax(0, 19ch) minmax(0, 1fr);
   align-items: baseline;
   gap: 1rem 2rem;
   padding-block: clamp(1.1rem, 2.6vw, 1.9rem);
@@ -274,7 +274,8 @@
   color: var(--ink-faint);
 }
 .human__row b {
-  font-size: var(--step-2);
+  font-size: var(--step-1);
+  line-height: 1.3;
 }
 .human__row p {
   color: var(--ink-dim);
@@ -286,6 +287,33 @@
   .human__row p {
     grid-column: 2;
   }
+}
+
+/* An evidence line under a chain / solution / status row. Same type scale and
+   palette as everything else — it only needs to read as a footnote. */
+.ev {
+  display: block;
+  margin-top: 0.75rem;
+  padding-inline-start: 0.9rem;
+  border-inline-start: 1px solid var(--line);
+  font-size: var(--step--1);
+  color: var(--ink-faint);
+}
+.ev a {
+  color: var(--ink-dim);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.ev a:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.human__row .code {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  color: var(--ink-faint);
 }
 
 /* ---------- Final statement ---------- */

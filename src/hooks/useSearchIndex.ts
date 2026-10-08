@@ -35,10 +35,10 @@ const INDEX: SearchResult[] = [
     id: a.id,
     title: a.name,
     meta: ['حیات وحش', a.habitat],
-    text: a.mainThreat,
+    text: a.pressure,
     href: `/wildlife?animal=${a.id}`,
     image: a.image.file,
-    haystack: normalizeFa([a.name, a.latinName, a.habitat, a.mainThreat, ...a.keywords].join(' ')),
+    haystack: normalizeFa([a.name, a.latinName, a.habitat, a.pressure, a.evidence, ...a.keywords].join(' ')),
   })),
 ]
 

@@ -37,6 +37,13 @@ export const IMAGES = {
   hyrcanianC: 'Caspian Hyrcanian Mixed Forests in Northern Iran 12.jpg',
   hyrcanianD: 'Caspian Hyrcanian mixed forests2023-04-11 29.jpg',
 
+  bakhteganWater: 'Bakhtegan Lake.jpg',
+  bakhteganDry: 'Crisis in Bakhtegan Lake2023-07-16.jpg',
+  bakhteganDry2: 'Crisis in Bakhtegan Lake2023-07-16 2.jpg',
+  bakhteganSat: 'Bakhtegan lake.jpg',
+  bakhteganKor: 'Kor river, Iran.jpg',
+  tashk: 'Tashk lake.jpg',
+
   hamounWater: 'Hamun(Hamoun) wetlands Iran-Afghanistan Border هامون.jpg',
   hamounDry: 'Hamun Solmaz Daryani Hamoun 1.jpg',
   hamounDry2: 'Hamun Solmaz Daryani Hamoun 3.jpg',

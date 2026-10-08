@@ -6,19 +6,23 @@ import { SourceList } from '../components/SourceList'
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { ArrowIcon } from '../components/Icons'
 import { LOCATION_BY_SLUG } from '../data/locations'
-import { TYPE_LABEL } from '../data/types'
+import { ARCHIVE_STATUS, TYPE_LABEL } from '../data/types'
 import { commons } from '../utils/images'
 import { useReveal } from '../hooks/useReveal'
 import { useParallax } from '../hooks/useParallax'
 import { useSeo } from '../hooks/useSeo'
 import { NotFound } from './NotFound'
 
+/** The seven questions. Same order in every case file, so two files can be
+    compared line by line during a presentation. */
 const SECTION_TITLES = {
-  whatHappened: 'چه اتفاقی افتاد؟',
-  whyItMatters: 'چرا مهم است؟',
-  humanImpact: 'اثر آن بر انسان',
-  atRisk: 'چه چیزی در خطر است؟',
-  solutions: 'چه می‌توان کرد؟',
+  whatWasHere: 'اینجا چه بود؟',
+  whatChanged: 'چه تغییر کرد؟',
+  why: 'چرا؟',
+  whatWasLost: 'چه چیزی از دست رفت؟',
+  affected: 'چه کسی و چه چیزی آسیب دید؟',
+  whatRemains: 'چه چیزی باقی مانده؟',
+  canItRecover: 'آیا برمی‌گردد؟',
 } as const
 
 export function LocationPage() {
@@ -71,9 +75,12 @@ export function LocationPage() {
               <dd>{TYPE_LABEL[loc.type]}</dd>
             </div>
             <div>
-              <dt>وضعیت کنونی</dt>
+              <dt>وضعیت در آرشیو</dt>
               <dd className="status-dot" data-tone={loc.statusTone}>
-                {loc.status}
+                {ARCHIVE_STATUS[loc.archiveStatus].label}
+                <span className="latin" style={{ color: 'var(--ink-faint)', fontSize: '0.68rem', letterSpacing: '0.16em' }}>
+                  {ARCHIVE_STATUS[loc.archiveStatus].code}
+                </span>
               </dd>
             </div>
             <div>
@@ -143,7 +150,7 @@ export function LocationPage() {
         <section className="section">
           <div className="shell">
             <h2 className="reveal" style={{ fontSize: 'var(--step-2)', marginBottom: '1.6rem' }}>
-              واقعیت‌های مستند
+              اعداد مستند این پرونده
             </h2>
             <div className="data-grid">
               {loc.facts.map((f) => (

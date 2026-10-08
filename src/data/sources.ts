@@ -70,6 +70,27 @@ export const SOURCES: Source[] = [
     topic: 'water',
   },
   {
+    title: 'Dust Storms — Earthshots: Satellite Images of Environmental Change',
+    organization: 'USGS EROS',
+    year: 'به‌روزرسانی‌شده',
+    url: 'https://eros.usgs.gov/earthshots/dust-storms',
+    topic: 'climate',
+  },
+  {
+    title: 'Effects of climate change and human activity on lake drying in Bakhtegan Basin, southwest Iran',
+    organization: 'Sustainable Water Resources Management (Springer)',
+    year: '2022',
+    url: 'https://doi.org/10.1007/s40899-022-00707-z',
+    topic: 'water',
+  },
+  {
+    title: 'Estimation of environmental water requirements via an ecological approach: A case study of Bakhtegan Lake, Iran',
+    organization: 'Ecological Engineering (Elsevier)',
+    year: '2017',
+    url: 'https://doi.org/10.1016/j.ecoleng.2016.12.023',
+    topic: 'wetland',
+  },
+  {
     title: 'Human and Climate Effects on the Hamoun Wetlands of Iran and Afghanistan',
     organization: 'American Meteorological Society',
     year: '2019',

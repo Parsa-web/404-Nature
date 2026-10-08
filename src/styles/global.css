@@ -268,6 +268,16 @@ button {
 .status-dot[data-tone='fragile']::before {
   background: #7d8c6a;
 }
+/* The archive's four verdicts need four dots. LOST does not pulse: nothing is
+   happening there any more. RECOVERING is the only one that reads as alive. */
+.status-dot[data-tone='lost']::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--ink-faint);
+}
+.status-dot[data-tone='recovering']::before {
+  background: #7d8c6a;
+  box-shadow: 0 0 0 4px rgba(125, 140, 106, 0.12);
+}
 
 @keyframes pulse {
   0%,
